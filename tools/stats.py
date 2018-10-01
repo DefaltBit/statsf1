@@ -3,7 +3,7 @@
 
 
 """ Predicts race results based on db """
-
+from hal.streams.pretty_table import pretty_format_table
 from scipy.stats import norm
 
 from statsf1.tools.explorer import RaceExplorer
@@ -17,6 +17,7 @@ COMPLETES_FORMAT = "# past years = {}\n" \
                                                                 "# completes = " + NUM_FORMAT + " +- " + NUM_FORMAT
 COMPLETES_PROBS = [15.5, 16.5, 17.5]
 WIN_QUALIFY_PROBS = [0.1, 0.2, 0.2]
+WIN_RACE_PROBS = [3, 6, 6]
 DRIVER_COMPLETES_FORMAT = "P({}) = " + NUM_FORMAT
 LT_PROB_MESSAGE = "P(< " + LOW_NUM_FORMAT + ") = " + NUM_FORMAT
 IN_BETWEEN_PROB_MESSAGE = "P(" + LOW_NUM_FORMAT + " < " + LOW_NUM_FORMAT + ") = " + NUM_FORMAT
@@ -25,11 +26,12 @@ GT_PROB_MESSAGE = "P(> " + LOW_NUM_FORMAT + ") = " + NUM_FORMAT
 
 def print_probabilities(stakes, probabilities, messages):
     most_probable = max(probabilities)
-    for stake, prob, message in zip(stakes, probabilities, messages):
+    lists = zip(stakes, probabilities, messages)
+    for i, (stake, prob, message) in enumerate(lists):
         try:
             msg = message.format(stake, prob)
         except:
-            msg = message.format(stake - 0.1, stake, prob)
+            msg = message.format(stakes[i - 1], stake, prob)
 
         msg = "{:>20}".format(msg)
 
@@ -138,7 +140,7 @@ class Statistician:
     def _get_qualify_margin(self, n_years):
         _, summaries = self.explorer.get_previous_years_result(n_years)
         summary = {
-            year: parse_time(data[1][6]) - parse_time(data[0][6])
+            year: parse_time(data[1][7]) - parse_time(data[0][7])
             for year, data in summaries.items()
         }
         x = [
@@ -180,14 +182,67 @@ class Statistician:
             [LT_PROB_MESSAGE, IN_BETWEEN_PROB_MESSAGE, GT_PROB_MESSAGE]
         )
 
+    def _get_race_margin(self, n_years):
+        _, summaries = self.explorer.get_previous_years_result(n_years)
+        summary = {
+            year: parse_time(data[1][5]) - parse_time(data[0][5])
+            for year, data in summaries.items()
+        }
+        x = [
+            diff for year, diff in summary.items()
+        ]
+
+        return norm.fit(x)
+
+    def print_race_margin(self, n_years, stakes):
+        mu, std = self._get_race_margin(n_years)
+        gauss = norm(mu, std)
+
+        probabilities = [
+            gauss.cdf(WIN_RACE_PROBS[0]),
+            gauss.cdf(WIN_RACE_PROBS[1]) - gauss.cdf(WIN_RACE_PROBS[0]),
+            1.0 - gauss.cdf(WIN_RACE_PROBS[1])
+        ]
+
+        stakes = [
+            1.0 / stake
+            for stake in stakes
+        ]  # calculate probability of each stake
+        stakes = [
+            prob / stake * prob
+            for prob, stake in zip(probabilities, stakes)
+        ]  # compare predicted probability with staked one
+
+        print("--- normal distribution " + NORM_PROB_FORMAT.format(mu, std))
+        print_probabilities(
+            WIN_RACE_PROBS,
+            probabilities,
+            [LT_PROB_MESSAGE, IN_BETWEEN_PROB_MESSAGE, GT_PROB_MESSAGE]
+        )
+
+        print("--- probability VS stakes (more is better)")
+        print_probabilities(
+            WIN_RACE_PROBS,
+            stakes,
+            [LT_PROB_MESSAGE, IN_BETWEEN_PROB_MESSAGE, GT_PROB_MESSAGE]
+        )
+
 
 def run(db):
-    driver = Statistician("Japon", 2017, db)
-    n_years = 8
+    race = "Japon"
+    year = 2017
+    n_years = 2
     n_drivers = 20
     completes_stakes = [2.25, 1.57, 1.72, 2, 1.28, 3.5]
     qualify_margin_stakes = [2.62, 3, 2.5]
+    race_margin_stakes = [3.25, 3.5, 1.9]
 
+    driver = Statistician(race, year, db)
     # driver.print_race_completes(n_drivers, n_years, completes_stakes)
     # driver.print_driver_completes(n_years)
-    driver.print_qualify_margin(n_years, qualify_margin_stakes)
+    # driver.print_qualify_margin(n_years, qualify_margin_stakes)
+    driver.print_race_margin(n_years, race_margin_stakes)
+
+    labels, summary = driver.explorer.get_summary()
+    print("--- summary for " + race + " in " + str(year))
+    print(pretty_format_table(labels, summary[:10]))

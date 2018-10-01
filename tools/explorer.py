@@ -42,7 +42,7 @@ class Explorer:
 
 class RaceExplorer(Explorer):
     RACE_SUMMARY_LABELS = ["race pos", "driver", "chassis",
-                           "race laps", "race completed?",
+                           "race laps", "race completed?", "race time",
                            "Q pos", "Q time", "race VS Q",
                            "best lap pos", "best lap", "best lap VS Q"]
 
@@ -99,7 +99,7 @@ class RaceExplorer(Explorer):
     def get_race_summary(self):
         return self.get_drivers_summary(
             "result",
-            ["Ch\\xc3\\xa2ssis ", "Pos ", "Tour "]
+            ["Ch\\xc3\\xa2ssis ", "Pos ", "Tour ", "\xa0"]
         )
 
     def get_qualification_summary(self):
@@ -140,9 +140,14 @@ class RaceExplorer(Explorer):
             else:
                 race_completed = "no"
 
+            try:
+                race_time = race[driver]["\xa0"].split("(")[0].strip()
+            except:
+                race_time = DNF
+
             row = [
                 race_pos, driver, race[driver]["Ch\\xc3\\xa2ssis "],
-                race[driver]["Tour "], race_completed
+                race[driver]["Tour "], race_completed, race_time
             ]
 
             try:
