@@ -7,6 +7,10 @@
 import argparse
 from enum import Enum
 
+from statsf1.models.download import download
+
+DATABASE_NAME = "statsf1"  # name of mongodb database to use
+
 
 class AppMode(Enum):
     DOWNLOAD = "download"
@@ -15,8 +19,8 @@ class AppMode(Enum):
     @staticmethod
     def available():
         return [
-            AppMode.DOWNLOAD,
-            AppMode.UPDATE
+            AppMode.DOWNLOAD.value,
+            AppMode.UPDATE.value
         ]
 
 
@@ -57,19 +61,16 @@ def parse_args(parser):
     return None
 
 
-def download():
-    pass  # todo
-
-
 def update():
     pass  # todo
 
 
 def main():
     mode = parse_args(create_args())
-    if mode == AppMode.DOWNLOAD:
-        download()
-    elif mode == AppMode.UPDATE:
+
+    if mode == AppMode.DOWNLOAD.value:
+        download(DATABASE_NAME)
+    elif mode == AppMode.UPDATE.value:
         update()
 
 

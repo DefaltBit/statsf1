@@ -37,9 +37,9 @@ class StatF1:
         web_page = Webpage(self.years_sitemap)
         web_page.get_html_source()  # download
 
-        for url in web_page.soup.find_all("url"):
-            text = url.loc.text
-            title = text.split("/")[-1].replace(".aspx", "")
+        for url in web_page.soup.find_all("url")[:1]:  # todo
+            url = url.find("loc").text
+            title = url.split("/")[-1].replace(".aspx", "")
             self.years.append(Year(title, url))
 
     def get_races(self, year):
@@ -85,6 +85,14 @@ class Year(WebsiteObject):
 
     def invalidate_cache(self):
         self.races = []
+
+    def to_dict(self):
+        out = {}
+
+        for race in self.races:
+            out[race.text] = race.to_dict()
+
+        return out
 
 
 class Race(WebsiteObject):
@@ -141,6 +149,17 @@ class Race(WebsiteObject):
         self.best_laps.parse()
         self.championship.parse()
 
+    def to_dict(self):
+        return {
+            "year": self.year.to_dict(),
+            "race_entrants": self.race_entrants.to_dict(),
+            "qualifications": self.qualifications.to_dict(),
+            "starting_grid": self.starting_grid.to_dict(),
+            "result": self.result.to_dict(),
+            "best_laps": self.best_laps.to_dict(),
+            "championship": self.championship.to_dict()
+        }
+
 
 class TableSection(WebsiteObject):
     def __init__(self, text, url):
@@ -161,3 +180,11 @@ class TableSection(WebsiteObject):
     def parse(self):
         if not self.header:
             self.parse()
+
+    def to_dict(self):
+        out = {}
+
+        for i, label in enumerate(self.header):
+            out[label] = [row[i] for row in self.rows]  # select column
+
+        return out
