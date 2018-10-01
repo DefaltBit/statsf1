@@ -108,6 +108,10 @@ class RaceExplorer(Explorer):
 
         return data
 
+    def get_drivers(self):
+        race = self.get_race()
+        return race[key]["Pilote "]
+
     def get_race_summary(self):
         return self.get_drivers_summary(
             "result",

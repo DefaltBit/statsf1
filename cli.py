@@ -10,7 +10,7 @@ from enum import Enum
 
 from statsf1.tools.download import download
 from statsf1.tools.explorer import run as explore
-from statsf1.tools.predict import run as predict
+from statsf1.tools.stats import run as predict
 from statsf1.tools.update import download as update
 
 DATABASE_NAME = "statsf1"  # name of mongodb database to use
