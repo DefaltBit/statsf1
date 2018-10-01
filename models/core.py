@@ -77,7 +77,10 @@ class Year(WebsiteObject):
         for div in self.web_page.soup.find_all("div", {"class": "gp"}):
             url = div.find_all("div")[1].a["href"]  # relative url
             url = urllib.parse.urljoin(self.url, url)  # full url
+
             title = just_alphanum(div.find("div").text)
+            title = " ".join(title.split(" ")[1:])  # remove number
+
             self.races.append(Race(title, url))
 
     def invalidate_cache(self):
@@ -88,6 +91,7 @@ class Race(WebsiteObject):
     def __init__(self, text, url):
         WebsiteObject.__init__(self, text, url)
 
+        self.year = self.url.split("/")[4]  # race's year
         self.race_entrants = None  # sections
         self.qualifications = None
         self.starting_grid = None
@@ -102,33 +106,40 @@ class Race(WebsiteObject):
             .find_all("div", {"class": "GPlink"})[0].find_all("a")
 
         self.race_entrants = TableSection(
-            links[0].text,
+            links[0].text,  # relative url
             urllib.parse.urljoin(self.url, links[0].a["href"])
         )
         self.qualifications = TableSection(
-            links[1].text,
+            links[1].text,  # relative url
             urllib.parse.urljoin(self.url, links[1].a["href"])
         )
         self.starting_grid = TableSection(
-            links[2].text,
+            links[2].text,  # relative url
             urllib.parse.urljoin(self.url, links[2].a["href"])
         )
         self.result = TableSection(
-            links[3].text,
+            links[3].text,  # relative url
             urllib.parse.urljoin(self.url, links[3].a["href"])
         )
         self.best_laps = TableSection(
-            links[5].text,
+            links[5].text,  # relative url
             urllib.parse.urljoin(self.url, links[5].a["href"])
         )
         self.championship = TableSection(
-            links[7].text,
+            links[7].text,  # relative url
             urllib.parse.urljoin(self.url, links[7].a["href"])
         )
 
     def parse(self):
         if not self.race_entrants:  # and so are None all the others ...
             self._find_sections()
+
+        self.race_entrants.parse()
+        self.qualifications.parse()
+        self.starting_grid.parse()
+        self.result.parse()
+        self.best_laps.parse()
+        self.championship.parse()
 
 
 class TableSection(WebsiteObject):
