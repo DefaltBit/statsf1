@@ -17,6 +17,12 @@ class WebsiteObject:
         self.url = url
         self.web_page = Webpage(self.url)
 
+        self.select_lang()
+
+    def select_lang(self, preferred="en"):
+        lang = "/" + preferred + "/"
+        self.url = self.url.replace("/fr/", lang)
+
 
 class StatF1:
     YEARS_SITEMAP = "sitemapsaison.xml"
@@ -37,7 +43,7 @@ class StatF1:
         web_page = Webpage(self.years_sitemap)
         web_page.get_html_source()  # download
 
-        for url in web_page.soup.find_all("url")[:1]:  # todo
+        for url in web_page.soup.find_all("url"):  # todo
             url = url.find("loc").text
             title = url.split("/")[-1].replace(".aspx", "")
             self.years.append(Year(title, url))
@@ -102,40 +108,30 @@ class Race(WebsiteObject):
         self.year = self.url.split("/")[4]  # race's year
         self.race_entrants = None  # sections
         self.qualifications = None
-        self.starting_grid = None
         self.result = None
         self.best_laps = None
-        self.championship = None
 
     def _find_sections(self):
         self.web_page.get_html_source()
 
-        links = self.web_page.soup \
-            .find_all("div", {"class": "GPlink"})[0].find_all("a")
+        links = self.web_page.soup.find_all("div", {"class": "GPlink"})[0]
+        links = links.find_all("a")
 
         self.race_entrants = TableSection(
             links[0].text,  # relative url
-            urllib.parse.urljoin(self.url, links[0].a["href"])
+            urllib.parse.urljoin(self.url, links[0]["href"])
         )
         self.qualifications = TableSection(
             links[1].text,  # relative url
-            urllib.parse.urljoin(self.url, links[1].a["href"])
-        )
-        self.starting_grid = TableSection(
-            links[2].text,  # relative url
-            urllib.parse.urljoin(self.url, links[2].a["href"])
+            urllib.parse.urljoin(self.url, links[1]["href"])
         )
         self.result = TableSection(
             links[3].text,  # relative url
-            urllib.parse.urljoin(self.url, links[3].a["href"])
+            urllib.parse.urljoin(self.url, links[3]["href"])
         )
         self.best_laps = TableSection(
             links[5].text,  # relative url
-            urllib.parse.urljoin(self.url, links[5].a["href"])
-        )
-        self.championship = TableSection(
-            links[7].text,  # relative url
-            urllib.parse.urljoin(self.url, links[7].a["href"])
+            urllib.parse.urljoin(self.url, links[5]["href"])
         )
 
     def parse(self):
@@ -144,20 +140,18 @@ class Race(WebsiteObject):
 
         self.race_entrants.parse()
         self.qualifications.parse()
-        self.starting_grid.parse()
         self.result.parse()
         self.best_laps.parse()
-        self.championship.parse()
 
     def to_dict(self):
         return {
-            "year": self.year.to_dict(),
+            "year": int(self.year),
+            "name": str(self.text),
+            "url": str(self.url),
             "race_entrants": self.race_entrants.to_dict(),
             "qualifications": self.qualifications.to_dict(),
-            "starting_grid": self.starting_grid.to_dict(),
             "result": self.result.to_dict(),
-            "best_laps": self.best_laps.to_dict(),
-            "championship": self.championship.to_dict()
+            "best_laps": self.best_laps.to_dict()
         }
 
 
@@ -165,26 +159,44 @@ class TableSection(WebsiteObject):
     def __init__(self, text, url):
         WebsiteObject.__init__(self, text, url)
 
-        self.header = []
+        self.labels = []
         self.rows = []
 
     def _find_data(self):
         self.web_page.get_html_source()
-        table = self.web_page.soup.find_all("table")[0]
-        table = HtmlTable(str(table))
-        data = table.parse()
+        table = self.web_page.soup.find("table")
 
-        self.header = data[0]
-        self.rows = data[1:]
+        if table is None:  # no table found
+            self.labels = []
+            self.rows = []
+        else:
+            table = HtmlTable(str(table))
+            data = table.parse()
+
+            self.labels = data[0]
+            self.rows = data[1:]
+
+        self._fix_data()
+
+    def _fix_data(self):
+        if len(self.labels) == 6 and len(self.rows[0]) == 8:  # race entrants
+            self.rows = [
+                [row[0], row[1], row[2], row[3], row[5], row[7]]
+                for row in self.rows
+            ]
 
     def parse(self):
-        if not self.header:
-            self.parse()
+        if not self.labels:
+            self._find_data()
 
     def to_dict(self):
         out = {}
 
-        for i, label in enumerate(self.header):
-            out[label] = [row[i] for row in self.rows]  # select column
+        for i, label in enumerate(self.labels):
+            column = [
+                row[i]
+                for row in self.rows
+            ]
+            out[label] = column
 
         return out
