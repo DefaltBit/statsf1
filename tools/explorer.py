@@ -8,23 +8,8 @@ from hal.mongodb.utils import get_documents_count, get_documents_in_database
 from hal.streams.pretty_table import pretty_format_table
 from pymongo import MongoClient
 
-NUM_FORMAT = "{:.2f}"
-MINUTES_TOKEN = "'"
-SECONDS_TOKEN = "''"
-PRETTY_SECONDS_TOKEN = "\""
-DNF = "-"
-
-
-def parse_time(time, minutes_split=MINUTES_TOKEN,
-               seconds_split=PRETTY_SECONDS_TOKEN):
-    minutes = float(time.split(minutes_split)[0])
-    seconds = float(time.split(seconds_split)[0].split(minutes_split)[1])
-    decimals = float(time.split(seconds_split)[1])
-    return minutes * 60.0 + seconds + decimals / 1000.0  # seconds
-
-
-def pretty_time(time):
-    return time.replace(SECONDS_TOKEN, PRETTY_SECONDS_TOKEN)
+from statsf1.tools.stats import NUM_FORMAT
+from statsf1.tools.utils import DNF, pretty_time, parse_time
 
 
 class Explorer:
@@ -110,7 +95,7 @@ class RaceExplorer(Explorer):
 
     def get_drivers(self):
         race = self.get_race()
-        return race[key]["Pilote "]
+        return race["result"]["Pilote "]
 
     def get_race_summary(self):
         return self.get_drivers_summary(

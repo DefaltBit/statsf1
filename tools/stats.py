@@ -114,6 +114,20 @@ class Statistician:
             if prob < 1:
                 print(DRIVER_COMPLETES_FORMAT.format("P(" + driver, prob))
 
+    def _get_qualify_margin(self, n_years):
+        _, summaries = self.explorer.get_previous_years_result(n_years)
+        summary = {
+            year: float(len([
+                row[4]
+                for row in data
+                if row[4] == "yes"
+            ])) / len(data)  # ratio
+            for year, data in summaries.items()
+        }
+        x = [
+            count for year, count in summary.items()
+        ]
+
 
 def run(db):
     driver = Statistician("Japon", 2017, db)
