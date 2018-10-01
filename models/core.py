@@ -9,7 +9,7 @@ import traceback
 
 from pymongo import MongoClient
 
-from statsf1.app import get_logger, log_thread
+from statsf1.logger import get_logger, log_race
 
 
 class DownloadThread(threading.Thread):
@@ -34,7 +34,7 @@ class DownloadThread(threading.Thread):
                 race.parse()
 
                 self.save_to_db(race)
-                log_thread(race)
+                log_race(race)
             except:
                 tb = traceback.format_exc()
                 self.logger.error(tb)

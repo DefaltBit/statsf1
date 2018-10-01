@@ -10,6 +10,8 @@ from hal.internet.parser import HtmlTable
 from hal.internet.web import Webpage
 from hal.strings.utils import just_alphanum
 
+from statsf1.logger import log_year, log_race
+
 
 class WebsiteObject:
     def __init__(self, text, url):
@@ -46,7 +48,9 @@ class StatF1:
         for url in web_page.soup.find_all("url"):  # todo
             url = url.find("loc").text
             title = url.split("/")[-1].replace(".aspx", "")
+
             self.years.append(Year(title, url))
+            log_year(title)
 
     def get_races(self, year):
         for y in self.get_all_years():
@@ -87,7 +91,9 @@ class Year(WebsiteObject):
             title = just_alphanum(div.find("div").text)
             title = " ".join(title.split(" ")[1:])  # remove number
 
-            self.races.append(Race(title, url))
+            race = Race(title, url)
+            self.races.append(race)
+            log_race(race)
 
     def invalidate_cache(self):
         self.races = []

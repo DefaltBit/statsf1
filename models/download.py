@@ -8,7 +8,7 @@ from queue import Queue
 
 from pymongo import MongoClient
 
-from statsf1.app import log_races
+from statsf1.logger import log_races
 from statsf1.models.core import DownloadThread
 from statsf1.models.statsf1 import StatF1
 
