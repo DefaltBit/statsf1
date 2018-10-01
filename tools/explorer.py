@@ -48,10 +48,17 @@ class Explorer:
 
         return race_entrants / len(races)
 
+    def get_races(self, year):
+        collection = self.db[year]
+        return [
+            race
+            for race in collection.find()
+        ]
+
 
 class RaceExplorer(Explorer):
-    RACE_SUMMARY_LABELS = ["driver", "chassis",
-                           "race pos", "race laps", "race completed?",
+    RACE_SUMMARY_LABELS = ["race pos", "driver", "chassis",
+                           "race laps", "race completed?",
                            "Q pos", "Q time", "race VS Q",
                            "best lap pos", "best lap", "best lap VS Q"]
 
@@ -137,8 +144,8 @@ class RaceExplorer(Explorer):
                 race_completed = "no"
 
             row = [
-                driver, race[driver]["Ch\\xc3\\xa2ssis "],
-                race_pos, race[driver]["Tour "], race_completed
+                race_pos, driver, race[driver]["Ch\\xc3\\xa2ssis "],
+                race[driver]["Tour "], race_completed
             ]
 
             try:
@@ -174,6 +181,16 @@ class RaceExplorer(Explorer):
 
         return self.RACE_SUMMARY_LABELS, summary
 
+    def get_previous_years_result(self, n_years):
+        year = int(self.raw_year)
+        years = range(year - n_years + 1, year + 1)
+
+        return self.RACE_SUMMARY_LABELS, {
+            str(year):
+                RaceExplorer(self.race, year, self.db).get_summary()[1]
+            for year in years
+        }
+
 
 def print_averages(db):
     driver = Explorer(db)
@@ -185,7 +202,17 @@ def print_averages(db):
     print(message.format(tot_races, average_drivers, tot_entries))
 
 
+def print_available_races(db, year):
+    driver = Explorer(db)
+    races = driver.get_races(str(year))
+    races = sorted([
+        race["name"]
+        for race in races
+    ])
+    print(races)
+
+
 def run(db):
-    driver = RaceExplorer("Canada", 2017, db)
+    driver = RaceExplorer("Japon", 2011, db)
     labels, summary = driver.get_summary()
     print(pretty_format_table(labels, summary))
