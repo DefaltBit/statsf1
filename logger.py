@@ -41,3 +41,10 @@ def log_race(race):
 def log_year(year):
     logger = get_logger()
     logger.debug(LOG_GOT_FORMAT.format(str(year)))
+
+
+def log_error(race):
+    logger = get_logger()
+    thread_id = threading.current_thread().ident
+    text = race.text + "(" + race.year + ")"
+    logger.error(LOG_THREAD_FORMAT.format(thread_id, text, race.url))

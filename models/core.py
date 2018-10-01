@@ -24,8 +24,11 @@ class DownloadThread(threading.Thread):
     def save_to_db(self, race):
         client = MongoClient()  # get instance of MongoDB
         db = client[self.local_db]  # get db
+
         collection = db[race.year]  # 1 collection per year
         collection.insert_one(race.to_dict())
+
+        client.close()
 
     def run(self):
         while True:
@@ -38,5 +41,6 @@ class DownloadThread(threading.Thread):
             except:
                 tb = traceback.format_exc()
                 self.logger.error(tb)
+                self.logger
 
             self.queue.task_done()

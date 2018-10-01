@@ -1,42 +1,24 @@
-#!/usr/bin/env python3
-# coding: utf-8
-
-
-""" Creates local database and downloads data """
-
 from queue import Queue
-
-from pymongo import MongoClient
 
 from statsf1.logger import log_races
 from statsf1.models.core import DownloadThread
-from statsf1.models.statsf1 import StatF1
-
-N_THREADS = 8  # threads to use when downloading
 
 
-def get_all_races():
-    driver = StatF1()
-    return driver.get_all_races()
+class Downloader:
+    def __init__(self, races, db, n_threads=8):
+        self.races = races
+        self.n_threads = n_threads
+        self.db = db
 
+    def run(self):
+        log_races(self.races)
 
-def clean_db(db_name):
-    client = MongoClient()  # mongodb client
-    client.drop_database(db_name)  # remove all previous data
-    client.close()  # flush and close
+        queue = Queue()
+        for race in self.races:
+            queue.put(race)
 
+        for i in range(self.n_threads):
+            t = DownloadThread(queue, self.db)
+            t.start()
 
-def download(local_db):
-    clean_db(local_db)
-    races = get_all_races()
-    log_races(races)
-
-    queue = Queue()
-    for race in races:
-        queue.put(race)
-
-    for i in range(N_THREADS):
-        t = DownloadThread(queue, local_db)
-        t.start()
-
-    queue.join()
+        queue.join()

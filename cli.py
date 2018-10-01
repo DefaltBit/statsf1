@@ -7,7 +7,7 @@
 import argparse
 from enum import Enum
 
-from statsf1.models.download import download
+from statsf1.download import download
 
 DATABASE_NAME = "statsf1"  # name of mongodb database to use
 

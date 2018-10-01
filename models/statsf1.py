@@ -45,7 +45,7 @@ class StatF1:
         web_page = Webpage(self.years_sitemap)
         web_page.get_html_source()  # download
 
-        for url in web_page.soup.find_all("url"):  # todo
+        for url in web_page.soup.find_all("url"):
             url = url.find("loc").text
             title = url.split("/")[-1].replace(".aspx", "")
 
@@ -67,6 +67,13 @@ class StatF1:
 
     def invalidate_cache(self):
         self.years = []
+
+    def get_year(self, year):
+        for y in self.get_all_years():
+            if y.text == year:
+                return y
+
+        return None
 
 
 class Year(WebsiteObject):
