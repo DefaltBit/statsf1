@@ -10,7 +10,7 @@ from hal.internet.parser import HtmlTable
 from hal.internet.web import Webpage
 from hal.strings.utils import just_alphanum
 
-from statsf1.logger import log_year, log_race
+from statsf1.logger import log_year, log_race, log_error
 
 
 class WebsiteObject:
@@ -148,24 +148,33 @@ class Race(WebsiteObject):
         )
 
     def parse(self):
-        if not self.race_entrants:  # and so are None all the others ...
-            self._find_sections()
+        try:
+            if not self.race_entrants:  # and so are None all the others ...
+                self._find_sections()
 
-        self.race_entrants.parse()
-        self.qualifications.parse()
-        self.result.parse()
-        self.best_laps.parse()
+            self.race_entrants.parse()
+            self.qualifications.parse()
+            self.result.parse()
+            self.best_laps.parse()
+        except:  # race is in the future
+            log_error(self, cause="incorrect parsing")
 
     def to_dict(self):
-        return {
+        out = {
             "year": int(self.year),
             "name": str(self.text),
             "url": str(self.url),
-            "race_entrants": self.race_entrants.to_dict(),
-            "qualifications": self.qualifications.to_dict(),
-            "result": self.result.to_dict(),
-            "best_laps": self.best_laps.to_dict()
         }
+
+        try:
+            out["race_entrants"] = self.race_entrants.to_dict(),
+            out["qualifications"] = self.qualifications.to_dict(),
+            out["result"] = self.result.to_dict(),
+            out["best_laps"] = self.best_laps.to_dict()
+        except:  # race is in the future
+            log_error(self, cause="incorrect dict conversion")
+
+        return out
 
 
 class TableSection(WebsiteObject):

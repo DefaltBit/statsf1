@@ -22,7 +22,7 @@ def clean_db(year, db_name):
     client.close()  # flush and close
 
 
-def update(year, local_db):
+def download(year, local_db):
     clean_db(year, local_db)
     races = get_races(year)
     Downloader(races, local_db).run()

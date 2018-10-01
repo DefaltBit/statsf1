@@ -5,9 +5,11 @@
 """ Command line tool """
 
 import argparse
+import datetime
 from enum import Enum
 
 from statsf1.download import download
+from statsf1.update import download as update
 
 DATABASE_NAME = "statsf1"  # name of mongodb database to use
 
@@ -61,17 +63,14 @@ def parse_args(parser):
     return None
 
 
-def update():
-    pass  # todo
-
-
 def main():
     mode = parse_args(create_args())
 
     if mode == AppMode.DOWNLOAD.value:
         download(DATABASE_NAME)
     elif mode == AppMode.UPDATE.value:
-        update()
+        now = datetime.datetime.now()
+        update(str(now.year), DATABASE_NAME)
 
 
 if __name__ == '__main__':

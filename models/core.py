@@ -32,15 +32,16 @@ class DownloadThread(threading.Thread):
 
     def run(self):
         while True:
+            race = self.queue.get()
+
             try:
-                race = self.queue.get()
                 race.parse()
 
                 self.save_to_db(race)
                 log_race(race)
             except:
                 tb = traceback.format_exc()
+                self.logger.error(race.url)
                 self.logger.error(tb)
-                self.logger
 
             self.queue.task_done()
