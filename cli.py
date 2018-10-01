@@ -75,7 +75,7 @@ def main():
         now = datetime.datetime.now()
         update(str(now.year), DATABASE_NAME)
     elif mode == AppMode.EXPLORE.value:
-        run()
+        run(DATABASE_NAME)
 
 
 if __name__ == '__main__':
