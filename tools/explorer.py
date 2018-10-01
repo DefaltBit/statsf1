@@ -91,13 +91,22 @@ class RaceExplorer(Explorer):
             for label in labels
         ]  # find all other data
 
-        return {
+        data = {
             driver: {
                 label: data[j][i]
                 for j, label in enumerate(labels)
             }
             for i, driver in enumerate(drivers)
         }
+
+        for driver, labels in data.items():
+            if "Pos " in labels:
+                try:
+                    int(data[driver]["Pos "])  # fix null positions
+                except:
+                    data[driver]["Pos "] = "ab"
+
+        return data
 
     def get_race_summary(self):
         return self.get_drivers_summary(
@@ -187,7 +196,9 @@ class RaceExplorer(Explorer):
 
         return self.RACE_SUMMARY_LABELS, {
             str(year):
-                RaceExplorer(self.race, year, self.db).get_summary()[1]
+                RaceExplorer(
+                    self.raw_race, str(year), self.db_name
+                ).get_summary()[1]
             for year in years
         }
 
