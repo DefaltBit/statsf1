@@ -2,8 +2,9 @@
 # coding: utf-8
 
 
-""" Tools """
+""" Tools and data """
 
+NUM_FORMAT = "{:.3f}"
 MINUTES_TOKEN = "'"
 SECONDS_TOKEN = "''"
 PRETTY_SECONDS_TOKEN = "\""

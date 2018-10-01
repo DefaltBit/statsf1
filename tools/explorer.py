@@ -8,8 +8,7 @@ from hal.mongodb.utils import get_documents_count, get_documents_in_database
 from hal.streams.pretty_table import pretty_format_table
 from pymongo import MongoClient
 
-from statsf1.tools.stats import NUM_FORMAT
-from statsf1.tools.utils import DNF, pretty_time, parse_time
+from statsf1.tools.utils import DNF, pretty_time, parse_time, NUM_FORMAT
 
 
 class Explorer:
