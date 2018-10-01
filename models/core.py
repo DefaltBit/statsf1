@@ -9,7 +9,7 @@ import traceback
 
 from pymongo import MongoClient
 
-from statsf1.logger import get_logger, log_race
+from statsf1.tools.logger import get_logger, log_race
 
 
 class DownloadThread(threading.Thread):

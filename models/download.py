@@ -1,7 +1,7 @@
 from queue import Queue
 
-from statsf1.logger import log_races
 from statsf1.models.core import DownloadThread
+from statsf1.tools.logger import log_races
 
 
 class Downloader:

@@ -8,8 +8,9 @@ import argparse
 import datetime
 from enum import Enum
 
-from statsf1.download import download
-from statsf1.update import download as update
+from statsf1.tools.download import download
+from statsf1.tools.explorer import run
+from statsf1.tools.update import download as update
 
 DATABASE_NAME = "statsf1"  # name of mongodb database to use
 
@@ -17,12 +18,14 @@ DATABASE_NAME = "statsf1"  # name of mongodb database to use
 class AppMode(Enum):
     DOWNLOAD = "download"
     UPDATE = "update"
+    EXPLORE = "explore"
 
     @staticmethod
     def available():
         return [
             AppMode.DOWNLOAD.value,
-            AppMode.UPDATE.value
+            AppMode.UPDATE.value,
+            AppMode.EXPLORE.value
         ]
 
 
@@ -71,6 +74,8 @@ def main():
     elif mode == AppMode.UPDATE.value:
         now = datetime.datetime.now()
         update(str(now.year), DATABASE_NAME)
+    elif mode == AppMode.EXPLORE.value:
+        run()
 
 
 if __name__ == '__main__':

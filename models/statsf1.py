@@ -10,7 +10,7 @@ from hal.internet.parser import HtmlTable
 from hal.internet.web import Webpage
 from hal.strings.utils import just_alphanum
 
-from statsf1.logger import log_year, log_race, log_error
+from statsf1.tools.logger import log_year, log_race, log_error
 
 
 class WebsiteObject:
@@ -163,13 +163,13 @@ class Race(WebsiteObject):
         out = {
             "year": int(self.year),
             "name": str(self.text),
-            "url": str(self.url),
+            "url": str(self.url)
         }
 
         try:
-            out["race_entrants"] = self.race_entrants.to_dict(),
-            out["qualifications"] = self.qualifications.to_dict(),
-            out["result"] = self.result.to_dict(),
+            out["race_entrants"] = self.race_entrants.to_dict()
+            out["qualifications"] = self.qualifications.to_dict()
+            out["result"] = self.result.to_dict()
             out["best_laps"] = self.best_laps.to_dict()
         except:  # race is in the future
             log_error(self, cause="incorrect dict conversion")
@@ -201,7 +201,7 @@ class TableSection(WebsiteObject):
         self._fix_data()
 
     def _fix_data(self):
-        if len(self.labels) == 6 and len(self.rows[0]) == 8:  # race entrants
+        if len(self.labels) == 6 and len(self.rows[0]) == 8:  # standings
             self.rows = [
                 [row[0], row[1], row[2], row[3], row[5], row[7]]
                 for row in self.rows
