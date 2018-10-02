@@ -34,7 +34,7 @@ class Explorer:
         collection = self.db.get_documents_in_collection(year)
         return [
             race
-            for race in collection.find()
+            for race in collection
         ]
 
 
@@ -187,7 +187,7 @@ class RaceExplorer(Explorer):
 
     def get_previous_years_result(self, n_years):
         year = int(self.raw_year)
-        years = range(year - n_years, year + 1)
+        years = range(year - n_years + 1, year + 1)
 
         return self.RACE_SUMMARY_LABELS, {
             str(year):
@@ -215,6 +215,17 @@ class RaceExplorer(Explorer):
         table = list(reversed(table))  # from nearest result to oldest
 
         return self.DRIVER_SUMMARY_LABELS, table
+
+    @staticmethod
+    def get_year_results(year, db_name):
+        races = [
+            race["name"] for race in Explorer(db_name).get_races(year)
+        ]  # year's race names
+
+        return races, [
+            RaceExplorer(race, year, db_name).get_summary()
+            for race in races
+        ]
 
 
 def print_averages(db):

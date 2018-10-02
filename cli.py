@@ -77,8 +77,7 @@ def main():
 
     race = "Japon"
     driver = "Lewis HAMILTON"
-    year = 2017
-    n_years = 7
+    n_years = 5
     n_drivers = 20
 
     if mode == AppMode.DOWNLOAD.value:
@@ -89,8 +88,10 @@ def main():
     elif mode == AppMode.EXPLORE.value:
         explore(DATABASE_NAME)
     elif mode == AppMode.STATS.value:
+        year = 2017
         stats(race, driver, year, n_years, n_drivers, DATABASE_NAME)
     elif mode == AppMode.PREDICT.value:
+        year = 2018
         predict(race, driver, year, n_years, n_drivers, DATABASE_NAME)
 
 

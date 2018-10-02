@@ -294,8 +294,9 @@ class Statistician:
 
     def print_summary(self):
         labels, summary = self.explorer.get_summary()
-        print(RACE_SUMMARY_FORMAT.format(self.explorer.raw_race,
-                                         self.explorer.raw_year))
+        print(RACE_SUMMARY_FORMAT.format(
+            self.explorer.raw_race, self.explorer.raw_year
+        ))
         print(pretty_format_table(labels, summary[:10]))
 
     def print_driver_summary(self, driver):
