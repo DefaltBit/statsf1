@@ -15,8 +15,11 @@ todo
 ### Update
 todo
 
-### Predict
--
+### Explore
+- `statsf1.tools.explorer.RaceExplorer` uses `MongoDB` to fetch result from local db
+- `statsf1.tools.stats.Statistician` uses probability distributions (mainly Gaussians) to get probabilities of the outcomes
+- `statsf1.tools.predict.Predictor` uses various machine learning techniques (mainly regressors and
+ to classifiers) to predict the outcomes
 
 ## Example of usage: update
 ```
