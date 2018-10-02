@@ -3,6 +3,7 @@
 
 
 """ Gets stats about results in db """
+
 from hal.streams.pretty_table import pretty_format_table
 from scipy.stats import norm
 

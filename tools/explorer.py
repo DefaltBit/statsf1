@@ -4,9 +4,8 @@
 
 """ Explore database """
 
-from hal.mongodb.utils import get_documents_count, get_documents_in_database
+from hal.mongodb.documents import DbBrowser
 from hal.streams.pretty_table import pretty_format_table
-from pymongo import MongoClient
 
 from statsf1.tools.utils import DNF, pretty_time, parse_time, NUM_FORMAT
 
@@ -14,14 +13,13 @@ from statsf1.tools.utils import DNF, pretty_time, parse_time, NUM_FORMAT
 class Explorer:
     def __init__(self, db):
         self.db_name = db
-        self.client = MongoClient()  # mongodb client
-        self.db = self.client[self.db_name]
+        self.db = DbBrowser(self.db_name)  # db browser
 
     def count_races(self):
-        return get_documents_count(self.db_name)
+        return self.db.get_documents_count()
 
     def average_race_entrants(self):
-        races = get_documents_in_database(self.db_name)
+        races = self.db.get_documents_in_database()
         race_entrants = 0
         key = "race_entrants"
 
@@ -33,7 +31,7 @@ class Explorer:
         return race_entrants / len(races)
 
     def get_races(self, year):
-        collection = self.db[year]
+        collection = self.db.get_documents_in_collection(year)
         return [
             race
             for race in collection.find()
@@ -59,10 +57,10 @@ class RaceExplorer(Explorer):
 
     def get_race(self):
         if self.race is None:
-            collection = self.db[self.raw_year]
+            documents = self.db.get_documents_in_collection(self.raw_year)
             race = [
                 race
-                for race in collection.find()
+                for race in documents
                 if race["name"] == self.raw_race
             ]
 
@@ -189,7 +187,7 @@ class RaceExplorer(Explorer):
 
     def get_previous_years_result(self, n_years):
         year = int(self.raw_year)
-        years = range(year - n_years + 1, year + 1)
+        years = range(year - n_years, year + 1)
 
         return self.RACE_SUMMARY_LABELS, {
             str(year):
