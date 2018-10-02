@@ -21,7 +21,8 @@ COMPLETES_FORMAT = "# past years = {}\n" \
                                                                 "# completes = " + NUM_FORMAT + " +- " + NUM_FORMAT
 PROB_FORMAT = "P({}) = " + NUM_FORMAT
 NORM_DISTRIBUTION_FORMAT = SOL + "normal distribution " + NORM_PROB_FORMAT
-SUMMARY_FORMAT = SOL + "summary of {} in {}"
+RACE_SUMMARY_FORMAT = SOL + "summary of {} in {}"
+DRIVER_SUMMARY_FORMAT = SOL + "summary of {} at {} from {} to {}"
 COMPLETES_MESSAGE = SOL + "who complets? Everyone, except the following:"
 
 # probability messages
@@ -67,6 +68,7 @@ def compare_to_stakes(probabilities, stakes):
         prob / stake * prob
         for prob, stake in zip(probabilities, stakes)
     ]  # compare predicted probability with staked one
+
 
 class Statistician:
     def __init__(self, race, year, db):
@@ -291,13 +293,25 @@ class Statistician:
 
     def print_summary(self):
         labels, summary = self.explorer.get_summary()
-        print(SUMMARY_FORMAT.format(self.explorer.raw_race,
-                                    self.explorer.raw_year))
+        print(RACE_SUMMARY_FORMAT.format(self.explorer.raw_race,
+                                         self.explorer.raw_year))
         print(pretty_format_table(labels, summary[:10]))
+
+    def print_driver_summary(self, n_years, driver):
+        labels, summary = self.explorer.get_previous_years_summary(n_years,
+                                                                   driver)
+        first_year = summary[-1][0]
+        last_year = summary[0][0]
+
+        print(DRIVER_SUMMARY_FORMAT.format(
+            driver, self.explorer.raw_race, first_year, last_year
+        ))
+        print(pretty_format_table(labels, summary))
 
 
 def run(db):
     race = "Japon"
+    driver = "Lewis HAMILTON"
     year = 2017
     n_years = 5
     n_drivers = 20
@@ -306,11 +320,13 @@ def run(db):
     race_margin_stakes = [3.25, 3.5, 1.9]
     winner_q_position_stakes = [1.62, 3.75, 6.5, 17, 34, 51]
 
-    driver = Statistician(race, year, db)
-    # driver.print_race_completes(n_drivers, n_years, completes_stakes)
-    # driver.print_driver_completes(n_years)
-    # driver.print_qualify_margin(n_years, qualify_margin_stakes)
-    # driver.print_race_margin(n_years, race_margin_stakes)
-    driver.print_winner_q_position(n_years, n_drivers, winner_q_position_stakes)
+    stats = Statistician(race, year, db)
 
-    driver.print_summary()  # race summary
+    # stats.print_race_completes(n_drivers, n_years, completes_stakes)
+    # stats.print_driver_completes(n_years)
+    # stats.print_qualify_margin(n_years, qualify_margin_stakes)
+    # stats.print_race_margin(n_years, race_margin_stakes)
+    # stats.print_winner_q_position(n_years, n_drivers, winner_q_position_stakes)
+
+    stats.print_summary()  # race summary
+    stats.print_driver_summary(n_years, driver)

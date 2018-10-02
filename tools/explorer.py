@@ -45,6 +45,10 @@ class RaceExplorer(Explorer):
                            "race laps", "race completed?", "race time",
                            "Q pos", "Q time", "race VS Q",
                            "best lap pos", "best lap", "best lap VS Q"]
+    DRIVER_SUMMARY_LABELS = ["year", "race pos", "chassis",
+                             "race laps", "race completed?", "race time",
+                             "Q pos", "Q time", "race VS Q",
+                             "best lap pos", "best lap", "best lap VS Q"]
 
     def __init__(self, race, year, db):
         Explorer.__init__(self, db)
@@ -194,6 +198,25 @@ class RaceExplorer(Explorer):
                 ).get_summary()[1]
             for year in years
         }
+
+    def get_previous_years_summary(self, n_years, driver):
+        labels, summaries = self.get_previous_years_result(n_years)
+        data = {
+            year: [row for row in table if row[1] == driver]
+            for year, table in summaries.items()
+        }
+        data = {
+            year: row[0] if row else [DNF] * len(labels)
+            for year, row in data.items()
+        }
+
+        table = [
+            [year] + [row[0]] + row[2:]  # remove driver column
+            for year, row in data.items()
+        ]
+        table = list(reversed(table))  # from nearest result to oldest
+
+        return self.DRIVER_SUMMARY_LABELS, table
 
 
 def print_averages(db):
