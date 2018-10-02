@@ -6,6 +6,7 @@
 
 from hal.data.lists import find_commons
 from hal.data.matrix import Matrix
+from hal.streams.pretty_table import pretty_format_table
 
 from statsf1.tools.explorer import RaceExplorer
 from statsf1.tools.stats import Statistician
@@ -28,20 +29,22 @@ class Predictor:
         labels = races[0][0]
         column = labels.index(label)  # find which column to get
 
-        label_results = [
-            Matrix(race).get_column(column)
-            for race in results
-            if race[0][1] != DNF  # discard DNFs races
-        ]
-        return {
+        label_results = {
             name: result
-            for name, result in zip(names, label_results)
+            for name, result in zip(names, results)
         }  # race name -> race result
+
+        label_results = {
+            name: Matrix(race).get_column(column)
+            for name, race in label_results.items()
+            if race[0][0] != DNF  # discard DNFs races
+        }
+        return label_results
 
     def _get_races_matrix(self, label):
         max_year = int(self.explorer.raw_year) + 1  # including this year
-        min_year = max_year - self.stats.n_years
-        years = range(min_year, max_year)  # years to get
+        min_year = max_year - self.stats.n_years - 1
+        years = range(min_year, max_year)
         results = {
             str(year): self._get_year_results(label, str(year))
             for year in years
@@ -50,7 +53,7 @@ class Predictor:
         races = find_commons([
             list(results.keys())  # result keys are the name of the races
             for year, results in results.items()
-        ])  # races in common between years
+        ]) + [self.explorer.raw_race]  # races in common between years
         results = {
             year: {
                 race: data
@@ -59,7 +62,17 @@ class Predictor:
             for year, results in results.items()
         }
 
-        return results
+        row_labels = sorted(results.keys())
+        column_labels = sorted(results[row_labels[0]].keys())
+        table = [
+            [
+                results[year][race][0] if race in results[year] else DNF
+                for race in column_labels
+            ]
+            for year in row_labels
+        ]
+
+        return row_labels, column_labels, table
 
     def _get_race_chassis_win(self):
         return None  # todo
@@ -104,9 +117,12 @@ class Predictor:
         pass  # todo
 
 
-def run(race, driver, year, n_years, n_drivers, db):
+def run(race, driver, year, n_years, db):
     pred = Predictor(race, year, db, n_years)
 
-    x = pred._get_races_matrix("driver")
-    for year, races in x.items():
-        print(races.keys())  # check are in same order
+    rows, columns, table = pred._get_races_matrix("driver")
+    for i, row in enumerate(table):
+        table[i] = [rows[i]] + row
+
+    labels = ["year"] + columns
+    print(pretty_format_table(labels, table))
