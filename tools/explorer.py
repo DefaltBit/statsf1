@@ -4,10 +4,12 @@
 
 """ Explore database """
 
+from hal.data.matrix import Matrix
 from hal.mongodb.documents import DbBrowser
 from hal.streams.pretty_table import pretty_format_table
 
-from statsf1.tools.utils import DNF, pretty_time, parse_time, NUM_FORMAT
+from statsf1.data import NUM_FORMAT, DNF
+from statsf1.tools.utils import pretty_time, parse_time
 
 
 class Explorer:
@@ -70,7 +72,7 @@ class RaceExplorer(Explorer):
 
         return self.race
 
-    def get_drivers_summary(self, key, labels):
+    def get_results(self, key, labels):
         race = self.get_race()
         drivers = race[key]["Pilote "]  # drivers are main key
         data = [
@@ -100,19 +102,19 @@ class RaceExplorer(Explorer):
         return race["result"]["Pilote "]
 
     def get_race_summary(self):
-        return self.get_drivers_summary(
+        return self.get_results(
             "result",
             ["Ch\\xc3\\xa2ssis ", "Pos ", "Tour ", "\xa0"]
         )
 
     def get_qualification_summary(self):
-        return self.get_drivers_summary(
+        return self.get_results(
             "qualifications",
             ["Ch\\xc3\\xa2ssis ", "Pos ", "Temps "]
         )
 
     def get_best_laps_summary(self):
-        return self.get_drivers_summary(
+        return self.get_results(
             "best_laps",
             ["Ch\\xc3\\xa2ssis ", "n ", "Temps "]
         )
@@ -192,7 +194,7 @@ class RaceExplorer(Explorer):
 
         return self.RACE_SUMMARY_LABELS, summary
 
-    def get_previous_years_result(self, n_years):
+    def get_previous_years_results(self, n_years):
         year = int(self.raw_year)
         years = range(year - n_years + 1, year + 1)
 
@@ -204,8 +206,8 @@ class RaceExplorer(Explorer):
             for year in years
         }
 
-    def get_previous_years_summary(self, n_years, driver):
-        labels, summaries = self.get_previous_years_result(n_years)
+    def get_previous_years_matrix(self, n_years, driver):
+        labels, summaries = self.get_previous_years_results(n_years)
         data = {
             year: [row for row in table if row[1] == driver]
             for year, table in summaries.items()
@@ -223,16 +225,37 @@ class RaceExplorer(Explorer):
 
         return self.DRIVER_SUMMARY_LABELS, table
 
-    @staticmethod
-    def get_year_results(year, db_name):
+    def get_results_on(self, year):
         races = [
-            race["name"] for race in Explorer(db_name).get_races(year)
+            race["name"] for race in Explorer(self.db_name).get_races(year)
         ]  # year's race names
 
         return races, [
-            RaceExplorer(race, year, db_name).get_summary()
+            RaceExplorer(race, year, self.db_name).get_summary()
             for race in races
         ]
+
+    def get_results_of_label_on(self, label, year):
+        names, races = self.get_results_on(year)
+        results = [
+            race[1]  # first element are the labels
+            for race in races
+        ]
+        labels = races[0][0]
+        column = labels.index(label)  # find which column to get
+
+        label_results = {
+            name: result
+            for name, result in zip(names, results)
+        }  # race name -> race result
+
+        label_results = {
+            name: Matrix(race).get_column(column)
+            for name, race in label_results.items()
+            if race[0][0] != DNF  # discard DNFs races
+        }
+
+        return label_results
 
 
 def print_averages(db):

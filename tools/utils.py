@@ -4,14 +4,11 @@
 
 """ Tools and data """
 
-NUM_FORMAT = "{:.3f}"
 MINUTES_TOKEN = "'"
 SECONDS_TOKEN = "''"
 PRETTY_SECONDS_TOKEN = "\""
 
 HOURS_TOKEN = "h"
-
-DNF = "-"
 
 
 def parse_hours_time(time):

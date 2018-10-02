@@ -4,17 +4,13 @@
 
 """ Gets stats about results in db """
 
+from hal.data.lists import find_commons
 from hal.streams.pretty_table import pretty_format_table
 from scipy.stats import norm
 
+from statsf1.data import NUM_FORMAT, DNF
 from statsf1.tools.explorer import RaceExplorer
-from statsf1.tools.utils import parse_time, NUM_FORMAT
-
-# number formats
-LOW_NUM_FORMAT = "{:.1f}"
-NORM_PROB_FORMAT = NUM_FORMAT + " +- " + NUM_FORMAT
-SOL = "--- "  # simple line
-TOL = "\n*** "  # title
+from statsf1.tools.utils import parse_time
 
 # messages
 COMPLETES_FORMAT = "# past years = {}\n" \
@@ -101,8 +97,43 @@ class Statistician:
         self.explorer = RaceExplorer(race, year, db)
         self.n_years = n_years
 
+    def get_races_matrix(self, label):
+        max_year = int(self.explorer.raw_year) + 1  # including this year
+        min_year = max_year - self.n_years - 1
+        years = range(min_year, max_year)
+        results = {
+            str(year): self.explorer.get_results_of_label_on(label, str(year))
+            for year in years
+        }  # all races results across all years
+
+        races = find_commons([
+            list(results.keys())  # result keys are the name of the races
+            for year, results in results.items()
+        ]) + [self.explorer.raw_race]  # races in common between years
+        results = {
+            year: {
+                race: data
+                for race, data in results.items() if race in races
+            }
+            for year, results in results.items()
+        }
+
+        row_labels = sorted(results.keys())
+        column_labels = sorted(results[row_labels[0]].keys())
+        table = [
+            [
+                results[year][race][0] if race in results[year] else DNF
+                for race in column_labels
+            ]
+            for year in row_labels
+        ]
+
+        row_labels = list(reversed(row_labels))  # from last year to oldest
+        table = list(reversed(table))
+        return row_labels, column_labels, table
+
     def _get_race_completes(self):
-        _, summaries = self.explorer.get_previous_years_result(self.n_years)
+        _, summaries = self.explorer.get_previous_years_results(self.n_years)
         summary = {
             year: float(len([
                 row[4]
@@ -140,7 +171,7 @@ class Statistician:
         )
 
     def _get_driver_completes(self):
-        _, summaries = self.explorer.get_previous_years_result(self.n_years)
+        _, summaries = self.explorer.get_previous_years_results(self.n_years)
         summary = {}
 
         for _, summ in summaries.items():
@@ -180,7 +211,7 @@ class Statistician:
                 print("{:>30}".format(msg))
 
     def _get_qualify_margin(self):
-        _, summaries = self.explorer.get_previous_years_result(self.n_years)
+        _, summaries = self.explorer.get_previous_years_results(self.n_years)
         summary = {
             year: parse_time(data[1][7]) - parse_time(data[0][7])
             for year, data in summaries.items()
@@ -213,7 +244,7 @@ class Statistician:
         )
 
     def _get_race_margin(self):
-        _, summaries = self.explorer.get_previous_years_result(self.n_years)
+        _, summaries = self.explorer.get_previous_years_results(self.n_years)
         summary = {
             year: parse_time(data[1][5]) - parse_time(data[0][5])
             for year, data in summaries.items()
@@ -246,7 +277,7 @@ class Statistician:
         )
 
     def _get_winner_q_position(self):
-        _, summaries = self.explorer.get_previous_years_result(self.n_years)
+        _, summaries = self.explorer.get_previous_years_results(self.n_years)
         summary = {
             year: float(data[0][6])  # position of winner in qualifications
             for year, data in summaries.items()
@@ -301,7 +332,7 @@ class Statistician:
 
     def print_driver_summary(self, driver):
         labels, summary = \
-            self.explorer.get_previous_years_summary(self.n_years, driver)
+            self.explorer.get_previous_years_matrix(self.n_years, driver)
         first_year = summary[-1][0]
         last_year = summary[0][0]
 

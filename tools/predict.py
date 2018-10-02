@@ -4,13 +4,10 @@
 
 """ Predicts race results based on db """
 
-from hal.data.lists import find_commons
 from hal.data.matrix import Matrix
-from hal.streams.pretty_table import pretty_format_table
+from sklearn.linear_model import ElasticNet
 
-from statsf1.tools.explorer import RaceExplorer
 from statsf1.tools.stats import Statistician
-from statsf1.tools.utils import DNF
 
 
 class Predictor:
@@ -18,76 +15,37 @@ class Predictor:
         self.stats = Statistician(race, year, db, n_years)
         self.explorer = self.stats.explorer
 
-    def _get_year_results(self, label, year):
-        names, races = RaceExplorer.get_year_results(
-            year, self.explorer.db_name
-        )
-        results = [
-            race[1]  # first element are the labels
-            for race in races
-        ]
-        labels = races[0][0]
-        column = labels.index(label)  # find which column to get
+    def _predict(self, ml, label):
+        rows, columns, matrix = self.stats.get_races_matrix(label)
 
-        label_results = {
-            name: result
-            for name, result in zip(names, results)
-        }  # race name -> race result
+        matrix = Matrix(matrix)  # prep-process: encode matrix
+        lb, matrix_num = matrix.encode()
 
-        label_results = {
-            name: Matrix(race).get_column(column)
-            for name, race in label_results.items()
-            if race[0][0] != DNF  # discard DNFs races
-        }
-        return label_results
+        _, x = matrix_num.remove_column(columns, self.explorer.raw_race)
+        y = matrix_num.get_column(columns.index(self.explorer.raw_race))
 
-    def _get_races_matrix(self, label):
-        max_year = int(self.explorer.raw_year) + 1  # including this year
-        min_year = max_year - self.stats.n_years - 1
-        years = range(min_year, max_year)
-        results = {
-            str(year): self._get_year_results(label, str(year))
-            for year in years
-        }  # all races results across all years
+        num_features = len(x[0])
+        x_train = [row for row in x[1:]]  # do NOT train on predict data
+        y_train = [val for val in y[1:]]
+        x_pred = x[0].reshape(1, num_features)  # vector to make predictions on
 
-        races = find_commons([
-            list(results.keys())  # result keys are the name of the races
-            for year, results in results.items()
-        ]) + [self.explorer.raw_race]  # races in common between years
-        results = {
-            year: {
-                race: data
-                for race, data in results.items() if race in races
-            }
-            for year, results in results.items()
-        }
+        ml.fit(x_train, y_train)  # fit
+        pred_num = ml.predict(x_pred)  # predict
 
-        row_labels = sorted(results.keys())
-        column_labels = sorted(results[row_labels[0]].keys())
-        table = [
-            [
-                results[year][race][0] if race in results[year] else DNF
-                for race in column_labels
-            ]
-            for year in row_labels
-        ]
-
-        return row_labels, column_labels, table
-
-    def _get_race_chassis_win(self):
-        return None  # todo
+        pred = lb.inverse_transform(pred_num)[0]  # post-process: decode
+        return pred, ml.coef_
 
     def print_race_chassis_win(self):
-        pass  # todo
+        clf, coeffs = ElasticNet()
+        pred = self._predict(clf, "chassis")
 
-    def _get_race_driver_win(self):
-        return None  # todo
+        print(pred)  # todo
 
     def print_race_driver_win(self):
-        pass  # todo
+        clf, coeffs = ElasticNet()
+        pred = self._predict(clf, "driver")
 
-    def _get_q_driver_win(self):
-        return None  # todo
+        print(pred)  # todo
 
     def print_q_driver_win(self):
         pass  # todo
@@ -119,10 +77,4 @@ class Predictor:
 
 def run(race, driver, year, n_years, db):
     pred = Predictor(race, year, db, n_years)
-
-    rows, columns, table = pred._get_races_matrix("driver")
-    for i, row in enumerate(table):
-        table[i] = [rows[i]] + row
-
-    labels = ["year"] + columns
-    print(pretty_format_table(labels, table))
+    pred.print_race_chassis_win()
