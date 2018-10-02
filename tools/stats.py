@@ -2,7 +2,7 @@
 # coding: utf-8
 
 
-""" Predicts race results based on db """
+""" Gets stats about results in db """
 from hal.streams.pretty_table import pretty_format_table
 from scipy.stats import norm
 
@@ -38,6 +38,14 @@ COMPLETES_PROBS = [15.5, 16.5, 17.5]
 WIN_QUALIFY_PROBS = [0.1, 0.2, 0.2]
 WIN_RACE_PROBS = [3, 6, 6]
 WIN_Q_PROBS = ["1", "2", "3-4", "5-7", "8-13", "14-20"]
+
+# stakes data (bet365 -> Formula 1)
+STAKES = {
+    "completes": [1.57, 2.25, 2, 1.72, 3.5, 1.28],
+    "q_margin": [2.62, 3, 2.5],
+    "race_margin": [3.25, 3.5, 1.9],
+    "win_q_pos": [1.62, 3.75, 6.5, 17, 34, 51]
+}
 
 
 def print_probabilities(stakes, probabilities, messages):
@@ -88,11 +96,12 @@ def compare_to_stakes(probabilities, stakes):
 
 
 class Statistician:
-    def __init__(self, race, year, db):
+    def __init__(self, race, year, db, n_years):
         self.explorer = RaceExplorer(race, year, db)
+        self.n_years = n_years
 
-    def _get_race_completes(self, n_years):
-        _, summaries = self.explorer.get_previous_years_result(n_years)
+    def _get_race_completes(self):
+        _, summaries = self.explorer.get_previous_years_result(self.n_years)
         summary = {
             year: float(len([
                 row[4]
@@ -107,8 +116,8 @@ class Statistician:
 
         return norm.fit(x)
 
-    def print_race_completes(self, n_drivers, n_years, stakes):
-        mu, std = self._get_race_completes(n_years)
+    def print_race_completes(self, n_drivers, stakes):
+        mu, std = self._get_race_completes()
         mu = n_drivers * mu
         std = n_drivers * std
         gauss = norm(mu, std)
@@ -129,8 +138,8 @@ class Statistician:
             [GT_PROB_FORMAT, LT_PROB_FORMAT] * len(COMPLETES_PROBS)
         )
 
-    def _get_driver_completes(self, n_years):
-        _, summaries = self.explorer.get_previous_years_result(n_years)
+    def _get_driver_completes(self):
+        _, summaries = self.explorer.get_previous_years_result(self.n_years)
         summary = {}
 
         for _, summ in summaries.items():
@@ -158,8 +167,8 @@ class Statistician:
             for driver, data in summary.items()
         }
 
-    def print_driver_completes(self, n_years):
-        summary = self._get_driver_completes(n_years)
+    def print_driver_completes(self):
+        summary = self._get_driver_completes()
         summary = sorted(summary.items(),
                          key=lambda x: x[0].split(" ")[-1])  # surname
 
@@ -169,8 +178,8 @@ class Statistician:
                 msg = PROB_FORMAT.format(driver, prob)
                 print("{:>30}".format(msg))
 
-    def _get_qualify_margin(self, n_years):
-        _, summaries = self.explorer.get_previous_years_result(n_years)
+    def _get_qualify_margin(self):
+        _, summaries = self.explorer.get_previous_years_result(self.n_years)
         summary = {
             year: parse_time(data[1][7]) - parse_time(data[0][7])
             for year, data in summaries.items()
@@ -181,8 +190,8 @@ class Statistician:
 
         return norm.fit(x)
 
-    def print_qualify_margin(self, n_years, stakes):
-        mu, std = self._get_qualify_margin(n_years)
+    def print_qualify_margin(self, stakes):
+        mu, std = self._get_qualify_margin()
         gauss = norm(mu, std)
 
         probabilities = [
@@ -202,8 +211,8 @@ class Statistician:
             [LT_PROB_FORMAT, IN_BETWEEN_PROB_FORMAT, GT_PROB_FORMAT]
         )
 
-    def _get_race_margin(self, n_years):
-        _, summaries = self.explorer.get_previous_years_result(n_years)
+    def _get_race_margin(self):
+        _, summaries = self.explorer.get_previous_years_result(self.n_years)
         summary = {
             year: parse_time(data[1][5]) - parse_time(data[0][5])
             for year, data in summaries.items()
@@ -214,8 +223,8 @@ class Statistician:
 
         return norm.fit(x)
 
-    def print_race_margin(self, n_years, stakes):
-        mu, std = self._get_race_margin(n_years)
+    def print_race_margin(self, stakes):
+        mu, std = self._get_race_margin()
         gauss = norm(mu, std)
 
         probabilities = [
@@ -235,8 +244,8 @@ class Statistician:
             [LT_PROB_FORMAT, IN_BETWEEN_PROB_FORMAT, GT_PROB_FORMAT]
         )
 
-    def _get_winner_q_position(self, n_years):
-        _, summaries = self.explorer.get_previous_years_result(n_years)
+    def _get_winner_q_position(self):
+        _, summaries = self.explorer.get_previous_years_result(self.n_years)
         summary = {
             year: float(data[0][6])  # position of winner in qualifications
             for year, data in summaries.items()
@@ -247,8 +256,8 @@ class Statistician:
 
         return norm.fit(x)
 
-    def print_winner_q_position(self, n_years, n_drivers, stakes):
-        mu, std = self._get_winner_q_position(n_years)
+    def print_winner_q_position(self, n_drivers, stakes):
+        mu, std = self._get_winner_q_position()
         gauss = norm(mu, std)
 
         raw_probs = [
@@ -288,9 +297,9 @@ class Statistician:
                                          self.explorer.raw_year))
         print(pretty_format_table(labels, summary[:10]))
 
-    def print_driver_summary(self, n_years, driver):
-        labels, summary = self.explorer.get_previous_years_summary(n_years,
-                                                                   driver)
+    def print_driver_summary(self, driver):
+        labels, summary = \
+            self.explorer.get_previous_years_summary(self.n_years, driver)
         first_year = summary[-1][0]
         last_year = summary[0][0]
 
@@ -300,38 +309,26 @@ class Statistician:
         print(pretty_format_table(labels, summary))
 
 
-def run(db):
-    race = "Japon"
-    driver = "Lewis HAMILTON"
-    year = 2017
-    n_years = 7
-    n_drivers = 20
-    stakes = {
-        "completes": [1.57, 2.25, 2, 1.72, 3.5, 1.28],
-        "q_margin": [2.62, 3, 2.5],
-        "race_margin": [3.25, 3.5, 1.9],
-        "win_q_pos": [1.62, 3.75, 6.5, 17, 34, 51]
-    }
-
-    stats = Statistician(race, year, db)
+def run(race, driver, year, n_years, n_drivers, db):
+    stats = Statistician(race, year, db, n_years)
 
     print(TOL + "# drivers who complete the race")
-    stats.print_race_completes(n_drivers, n_years, stakes["completes"])
+    stats.print_race_completes(n_drivers, STAKES["completes"])
 
     print(TOL + "Drivers who complete the race")
-    stats.print_driver_completes(n_years)
+    stats.print_driver_completes()
 
     print(TOL + "Q time win margin")
-    stats.print_qualify_margin(n_years, stakes["q_margin"])
+    stats.print_qualify_margin(STAKES["q_margin"])
 
     print(TOL + "Race time win margin")
-    stats.print_race_margin(n_years, stakes["race_margin"])
+    stats.print_race_margin(STAKES["race_margin"])
 
     print(TOL + "Q position of winner")
-    stats.print_winner_q_position(n_years, n_drivers, stakes["win_q_pos"])
+    stats.print_winner_q_position(n_drivers, STAKES["win_q_pos"])
 
     print(TOL + "Race summary")
     stats.print_summary()
 
     print(TOL + "Driver summary")
-    stats.print_driver_summary(n_years, driver)
+    stats.print_driver_summary(driver)
