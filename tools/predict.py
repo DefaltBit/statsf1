@@ -5,9 +5,18 @@
 """ Predicts race results based on db """
 
 from hal.data.matrix import Matrix
-from sklearn.linear_model import ElasticNet
+from hal.streams.pretty_table import pretty_format_table
+from sklearn.linear_model import LogisticRegression
 
+from statsf1.data import SOL, NUM_FORMAT, TOL
 from statsf1.tools.stats import Statistician
+
+# format
+PREDICT_FORMAT = SOL + "Prediction at {} in {} using last {} " \
+                       "years\n    {}"
+
+# messages
+COEFFS_MESSAGE = SOL + "Probabilities of classes"
 
 
 class Predictor:
@@ -30,22 +39,48 @@ class Predictor:
         x_pred = x[0].reshape(1, num_features)  # vector to make predictions on
 
         ml.fit(x_train, y_train)  # fit
-        pred_num = ml.predict(x_pred)  # predict
 
+        pred_num = ml.predict(x_pred)  # predict
         pred = lb.inverse_transform(pred_num)[0]  # post-process: decode
-        return pred, ml.coef_
+
+        classes = ml.classes_.tolist()  # prediction classes
+        coeffs = ml.predict_proba(x_pred)[0]  # probabilities of classes
+
+        return pred, coeffs, lb.inverse_transform(classes)
 
     def print_race_chassis_win(self):
-        clf, coeffs = ElasticNet()
-        pred = self._predict(clf, "chassis")
+        clf = LogisticRegression(solver='lbfgs', multi_class='multinomial',
+                                 max_iter=1000)
+        pred, coeffs, classes = self._predict(clf, "chassis")
 
-        print(pred)  # todo
+        print(PREDICT_FORMAT.format(
+            self.explorer.raw_race, self.explorer.raw_year,
+            self.stats.n_years, pred
+        ))
+
+        print(COEFFS_MESSAGE)
+        coeffs = [
+            NUM_FORMAT.format(coeff)
+            for coeff in coeffs
+        ]
+        print(pretty_format_table(classes, [coeffs]))
 
     def print_race_driver_win(self):
-        clf, coeffs = ElasticNet()
-        pred = self._predict(clf, "driver")
+        clf = LogisticRegression(solver='lbfgs', multi_class='multinomial',
+                                 max_iter=1000)
+        pred, coeffs, classes = self._predict(clf, "driver")
 
-        print(pred)  # todo
+        print(PREDICT_FORMAT.format(
+            self.explorer.raw_race, self.explorer.raw_year,
+            self.stats.n_years, pred
+        ))
+
+        print(COEFFS_MESSAGE)
+        coeffs = [
+            NUM_FORMAT.format(coeff)
+            for coeff in coeffs
+        ]
+        print(pretty_format_table(classes, [coeffs]))
 
     def print_q_driver_win(self):
         pass  # todo
@@ -77,4 +112,9 @@ class Predictor:
 
 def run(race, driver, year, n_years, db):
     pred = Predictor(race, year, db, n_years)
+
+    print(TOL + "Chassis winner")
     pred.print_race_chassis_win()
+
+    print(TOL + "Driver winner")
+    pred.print_race_driver_win()

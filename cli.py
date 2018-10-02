@@ -77,7 +77,7 @@ def main():
 
     race = "Japon"
     driver = "Lewis HAMILTON"
-    n_years = 5
+    n_years = 10
     n_drivers = 20
 
     if mode == AppMode.DOWNLOAD.value:

@@ -8,11 +8,12 @@ from hal.data.lists import find_commons
 from hal.streams.pretty_table import pretty_format_table
 from scipy.stats import norm
 
-from statsf1.data import NUM_FORMAT, DNF
+from statsf1.data import NUM_FORMAT, DNF, NORM_PROB_FORMAT, SOL, LOW_NUM_FORMAT, \
+    TOL
 from statsf1.tools.explorer import RaceExplorer
 from statsf1.tools.utils import parse_time
 
-# messages
+# formatting
 COMPLETES_FORMAT = "# past years = {}\n" \
                    "ratio of completes = " + NORM_PROB_FORMAT + "\n" \
                                                                 "# drivers = {} =>\n" \
