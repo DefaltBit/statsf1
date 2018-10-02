@@ -39,7 +39,7 @@ class Predictor:
         }  # race name -> race result
 
     def _get_races_matrix(self, label):
-        max_year = int(self.explorer.raw_year)
+        max_year = int(self.explorer.raw_year) + 1  # including this year
         min_year = max_year - self.stats.n_years
         years = range(min_year, max_year)  # years to get
         results = {
@@ -106,4 +106,7 @@ class Predictor:
 
 def run(race, driver, year, n_years, n_drivers, db):
     pred = Predictor(race, year, db, n_years)
-    print(pred._get_races_matrix("driver"))
+
+    x = pred._get_races_matrix("driver")
+    for year, races in x.items():
+        print(races.keys())  # check are in same order

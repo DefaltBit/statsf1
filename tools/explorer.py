@@ -47,6 +47,7 @@ class RaceExplorer(Explorer):
                              "race laps", "race completed?", "race time",
                              "Q pos", "Q time", "race VS Q",
                              "best lap pos", "best lap", "best lap VS Q"]
+    DNF_RACE = [[DNF] * len(RACE_SUMMARY_LABELS)]
 
     def __init__(self, race, year, db):
         Explorer.__init__(self, db)
@@ -117,71 +118,77 @@ class RaceExplorer(Explorer):
         )
 
     def get_summary(self):
-        race = self.get_race_summary()
-        qualification = self.get_qualification_summary()
-        best_laps = self.get_best_laps_summary()
+        try:
+            race = self.get_race_summary()
+            qualification = self.get_qualification_summary()
+            best_laps = self.get_best_laps_summary()
 
-        standings = sorted(race.items(), key=lambda x: int(x[1]["Pos "], 16))
-        race_laps = float(race[standings[0][0]]["Tour "])  # laps of the winner
-        summary = []
+            standings = sorted(race.items(),
+                               key=lambda x: int(x[1]["Pos "], 16))
+            race_laps = float(
+                race[standings[0][0]]["Tour "])  # laps of the winner
+            summary = []
 
-        for driver, _ in standings:
-            race_pos = race[driver]["Pos "]
-            try:
-                int(race_pos)
-            except:
-                race_pos = DNF
-
-            try:
-                race_completed = int(race[driver]["Tour "]) > 0.9 * race_laps
-            except:
-                race_completed = False
-
-            if race_completed:
-                race_completed = "yes"
-            else:
-                race_completed = "no"
-
-            try:
-                race_time = race[driver]["\xa0"].split("(")[0].strip()
-            except:
-                race_time = DNF
-
-            row = [
-                race_pos, driver, race[driver]["Ch\\xc3\\xa2ssis "],
-                race[driver]["Tour "], race_completed, race_time
-            ]
-
-            try:
-                q_pos = qualification[driver]["Pos "]
-                q_lap = pretty_time(qualification[driver]["Temps "])
-                q_lap_time = parse_time(q_lap)
+            for driver, _ in standings:
+                race_pos = race[driver]["Pos "]
+                try:
+                    int(race_pos)
+                except:
+                    race_pos = DNF
 
                 try:
-                    race_vs_q = str(int(race_pos) - int(q_pos))
+                    race_completed = int(
+                        race[driver]["Tour "]) > 0.9 * race_laps
                 except:
+                    race_completed = False
+
+                if race_completed:
+                    race_completed = "yes"
+                else:
+                    race_completed = "no"
+
+                try:
+                    race_time = race[driver]["\xa0"].split("(")[0].strip()
+                except:
+                    race_time = DNF
+
+                row = [
+                    race_pos, driver, race[driver]["Ch\\xc3\\xa2ssis "],
+                    race[driver]["Tour "], race_completed, race_time
+                ]
+
+                try:
+                    q_pos = qualification[driver]["Pos "]
+                    q_lap = pretty_time(qualification[driver]["Temps "])
+                    q_lap_time = parse_time(q_lap)
+
+                    try:
+                        race_vs_q = str(int(race_pos) - int(q_pos))
+                    except:
+                        race_vs_q = DNF
+                except:
+                    q_pos = DNF
+                    q_lap = DNF
+                    q_lap_time = 0
                     race_vs_q = DNF
-            except:
-                q_pos = DNF
-                q_lap = DNF
-                q_lap_time = 0
-                race_vs_q = DNF
 
-            row += [q_pos, q_lap, race_vs_q]
+                row += [q_pos, q_lap, race_vs_q]
 
-            try:
-                best_lap_pos = best_laps[driver]["n "]
-                best_lap = pretty_time(best_laps[driver]["Temps "])
-                best_lap_time = parse_time(best_lap)
-                ratio_best_q = 100.0 * (best_lap_time / q_lap_time - 1)
-                ratio_best_q = NUM_FORMAT.format(ratio_best_q) + "%"
-            except:
-                best_lap_pos = DNF
-                best_lap = DNF
-                ratio_best_q = DNF
+                try:
+                    best_lap_pos = best_laps[driver]["n "]
+                    best_lap = pretty_time(best_laps[driver]["Temps "])
+                    best_lap_time = parse_time(best_lap)
+                    ratio_best_q = 100.0 * (best_lap_time / q_lap_time - 1)
+                    ratio_best_q = NUM_FORMAT.format(ratio_best_q) + "%"
+                except:
+                    best_lap_pos = DNF
+                    best_lap = DNF
+                    ratio_best_q = DNF
 
-            row += [best_lap_pos, best_lap, ratio_best_q]
-            summary.append(row)
+                row += [best_lap_pos, best_lap, ratio_best_q]
+                summary.append(row)
+        except:
+            summary = self.DNF_RACE
 
         return self.RACE_SUMMARY_LABELS, summary
 
