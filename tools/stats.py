@@ -12,7 +12,8 @@ from statsf1.tools.utils import parse_time, NUM_FORMAT
 # number formats
 LOW_NUM_FORMAT = "{:.1f}"
 NORM_PROB_FORMAT = NUM_FORMAT + " +- " + NUM_FORMAT
-SOL = "--- "
+SOL = "--- "  # simple line
+TOL = "\n*** "  # title
 
 # messages
 COMPLETES_FORMAT = "# past years = {}\n" \
@@ -48,12 +49,28 @@ def print_probabilities(stakes, probabilities, messages):
         except:
             msg = message.format(stakes[i - 1], stake, prob)
 
-        msg = "{:>20}".format(msg)
+        msg = "{:>21}".format(msg)
 
         if prob == most_probable:
             msg += " <-- best"
 
         print(msg)
+
+
+def print_probabilities_summary(title, labels, probabilities, stakes, messages):
+    print(title)
+    print_probabilities(
+        labels,
+        probabilities,
+        messages
+    )
+
+    print(PROB_VS_STAKE_MESSAGE)
+    print_probabilities(
+        labels,
+        stakes,
+        messages
+    )
 
 
 def get_probabilities(stakes):
@@ -98,27 +115,19 @@ class Statistician:
 
         probabilities = []
         for prob in COMPLETES_PROBS:
-            probabilities.append(gauss.cdf(prob - 0.5))  # discreet
-            probabilities.append(1.0 - gauss.cdf(prob + 0.5))
+            probabilities.append(1.0 - gauss.cdf(prob + 0.5))  # discreet
+            probabilities.append(gauss.cdf(prob - 0.5))
 
         stakes = get_probabilities(stakes)
         stakes = compare_to_stakes(probabilities, stakes)
 
-        print(NORM_DISTRIBUTION_FORMAT.format(mu, std))
-        for i, prob in enumerate(probabilities):
-            stake_prob = COMPLETES_PROBS[int(i / 2)]
-            msg = LT_PROB_FORMAT.format(stake_prob, prob)
-            if prob == max(probabilities):
-                msg += " <-- most probable"
-            print(msg)
-
-        print(PROB_VS_STAKE_MESSAGE)
-        for i, stake in enumerate(stakes):
-            stake_prob = COMPLETES_PROBS[int(i / 2)]
-            msg = LT_PROB_FORMAT.format(stake_prob, stake)
-            if stake == max(stakes):
-                msg += " <-- best choice"
-            print(msg)
+        print_probabilities_summary(
+            NORM_DISTRIBUTION_FORMAT.format(mu, std),
+            sum([2 * [x] for x in COMPLETES_PROBS], []),
+            probabilities,
+            stakes,
+            [GT_PROB_FORMAT, LT_PROB_FORMAT] * len(COMPLETES_PROBS)
+        )
 
     def _get_driver_completes(self, n_years):
         _, summaries = self.explorer.get_previous_years_result(n_years)
@@ -185,16 +194,10 @@ class Statistician:
         stakes = get_probabilities(stakes)
         stakes = compare_to_stakes(probabilities, stakes)
 
-        print(NORM_DISTRIBUTION_FORMAT.format(mu, std))
-        print_probabilities(
+        print_probabilities_summary(
+            NORM_DISTRIBUTION_FORMAT.format(mu, std),
             WIN_QUALIFY_PROBS,
             probabilities,
-            [LT_PROB_FORMAT, IN_BETWEEN_PROB_FORMAT, GT_PROB_FORMAT]
-        )
-
-        print(PROB_VS_STAKE_MESSAGE)
-        print_probabilities(
-            WIN_QUALIFY_PROBS,
             stakes,
             [LT_PROB_FORMAT, IN_BETWEEN_PROB_FORMAT, GT_PROB_FORMAT]
         )
@@ -224,16 +227,10 @@ class Statistician:
         stakes = get_probabilities(stakes)
         stakes = compare_to_stakes(probabilities, stakes)
 
-        print(NORM_DISTRIBUTION_FORMAT.format(mu, std))
-        print_probabilities(
+        print_probabilities_summary(
+            NORM_DISTRIBUTION_FORMAT.format(mu, std),
             WIN_RACE_PROBS,
             probabilities,
-            [LT_PROB_FORMAT, IN_BETWEEN_PROB_FORMAT, GT_PROB_FORMAT]
-        )
-
-        print(PROB_VS_STAKE_MESSAGE)
-        print_probabilities(
-            WIN_RACE_PROBS,
             stakes,
             [LT_PROB_FORMAT, IN_BETWEEN_PROB_FORMAT, GT_PROB_FORMAT]
         )
@@ -277,16 +274,10 @@ class Statistician:
         stakes = get_probabilities(stakes)
         stakes = compare_to_stakes(probabilities, stakes)
 
-        print(NORM_DISTRIBUTION_FORMAT.format(mu, std))
-        print_probabilities(
+        print_probabilities_summary(
+            NORM_DISTRIBUTION_FORMAT.format(mu, std),
             WIN_Q_PROBS,
             probabilities,
-            [PROB_FORMAT] * n_drivers
-        )
-
-        print(PROB_VS_STAKE_MESSAGE)
-        print_probabilities(
-            WIN_Q_PROBS,
             stakes,
             [PROB_FORMAT] * n_drivers
         )
@@ -313,20 +304,34 @@ def run(db):
     race = "Japon"
     driver = "Lewis HAMILTON"
     year = 2017
-    n_years = 5
+    n_years = 7
     n_drivers = 20
-    completes_stakes = [2.25, 1.57, 1.72, 2, 1.28, 3.5]
-    qualify_margin_stakes = [2.62, 3, 2.5]
-    race_margin_stakes = [3.25, 3.5, 1.9]
-    winner_q_position_stakes = [1.62, 3.75, 6.5, 17, 34, 51]
+    stakes = {
+        "completes": [1.57, 2.25, 2, 1.72, 3.5, 1.28],
+        "q_margin": [2.62, 3, 2.5],
+        "race_margin": [3.25, 3.5, 1.9],
+        "win_q_pos": [1.62, 3.75, 6.5, 17, 34, 51]
+    }
 
     stats = Statistician(race, year, db)
 
-    # stats.print_race_completes(n_drivers, n_years, completes_stakes)
-    # stats.print_driver_completes(n_years)
-    # stats.print_qualify_margin(n_years, qualify_margin_stakes)
-    # stats.print_race_margin(n_years, race_margin_stakes)
-    # stats.print_winner_q_position(n_years, n_drivers, winner_q_position_stakes)
+    print(TOL + "# drivers who complete the race")
+    stats.print_race_completes(n_drivers, n_years, stakes["completes"])
 
-    stats.print_summary()  # race summary
+    print(TOL + "Drivers who complete the race")
+    stats.print_driver_completes(n_years)
+
+    print(TOL + "Q time win margin")
+    stats.print_qualify_margin(n_years, stakes["q_margin"])
+
+    print(TOL + "Race time win margin")
+    stats.print_race_margin(n_years, stakes["race_margin"])
+
+    print(TOL + "Q position of winner")
+    stats.print_winner_q_position(n_years, n_drivers, stakes["win_q_pos"])
+
+    print(TOL + "Race summary")
+    stats.print_summary()
+
+    print(TOL + "Driver summary")
     stats.print_driver_summary(n_years, driver)
