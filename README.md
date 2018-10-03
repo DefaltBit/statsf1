@@ -4,19 +4,17 @@
 </div>
 
 <div align="center">
-<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a> <a href="https://opensource.org/licenses/MIT"><img alt="Open Source Love" src="https://badges.frapsoft.com/os/v1/open-source.svg?v=103"></a> <a href="https://github.com/sirfoga/scrapebots/issues"><img alt="Contributions welcome" src="https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat"></a>
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a> <a href="https://opensource.org/licenses/MIT"><img alt="Open Source Love" src="https://badges.frapsoft.com/os/v1/open-source.svg?v=103"></a> <a href="https://github.com/sirfoga/statsf1/issues"><img alt="Contributions welcome" src="https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat"></a>
 </div>
 
-## How
-
-### Explore
+## How it's implemented
 - `statsf1.tools.explorer.RaceExplorer` uses `MongoDB` to fetch result from local db
 - `statsf1.tools.stats.Statistician` uses probability distributions (mainly Gaussians) to get probabilities of the outcomes
 - `statsf1.tools.predict.Predictor` uses various machine learning techniques (mainly regressors and
  to classifiers) to predict the outcomes
 
 
-## Example of usage: stats
+## Example of usage: `stats` mode
 ```
 /usr/bin/python3.6 statsf1/cli.py -m stats
 
@@ -123,17 +121,29 @@ P(Giedo van der GARDE) = 0.000
 Process finished with exit code 0
 ```
 
+## Example of usage: `predict` mode
+```
+todo
+Process finished with exit code 0
+```
+
 
 ## Install
-See [README](https://github.com/sirfoga/scrapebots)
+Running `pip3 install .` will take care of all dependencies. Moreover you need the `MongoDB` database: you can download it with [this bot](https://github.com/sirfoga/scrapebots/tree/master/bots/statsf1).
 
 
 ## Contributing
-See [README](https://github.com/sirfoga/scrapebots)
+[Fork](https://github.com/sirfoga/statsf1/fork) | Patch | Push | [Pull request](https://github.com/sirfoga/statsf1/pulls)
 
 
 ## Feedback
-See [README](https://github.com/sirfoga/scrapebots)
+Suggestions and improvements [welcome](https://github.com/sirfoga/statsf1/issues)!
+
+
+## Authors
+| [![sirfoga](https://avatars0.githubusercontent.com/u/14162628?s=128&v=4)](https://github.com/sirfoga "Follow @sirfoga on Github") |
+|---|
+| [Stefano Fogarollo](https://sirfoga.github.io) |
 
 
 ## License
