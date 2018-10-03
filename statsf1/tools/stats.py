@@ -257,7 +257,7 @@ class Statistician:
                          key=lambda x: x[0].split(" ")[-1])  # surname
 
         print(COMPLETES_MESSAGE)
-        for driver, prob in summary:
+        for driver, prob in sorted(summary, key=lambda x: x[1], reverse=True):
             if prob < 1:
                 msg = PROB_FORMAT.format(driver, prob)
                 print("{:>30}".format(msg))

@@ -137,7 +137,7 @@ Running `pip3 install .` will take care of all dependencies. Moreover you need t
 
 
 ## Feedback
-Suggestions and improvements [welcome](https://github.com/sirfoga/statsf1/issues)!
+Suggestions and improvements are [welcome](https://github.com/sirfoga/statsf1/issues)!
 
 
 ## Authors
