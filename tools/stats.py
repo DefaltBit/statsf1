@@ -167,6 +167,20 @@ class Statistician:
 
         return row_labels, column_labels, table
 
+    def get_race_matrix(self, data_label, col_index=0, driver=None,
+                        chassis=None, including_this_year=True):
+        row_labels, column_labels, table = self.get_matrix(
+            data_label, col_index=col_index, driver=driver,
+            chassis=chassis, including_this_year=including_this_year
+        )
+
+        race_index = column_labels.index(self.explorer.raw_race)
+        column = [
+            row[race_index]
+            for row in table
+        ]
+        return row_labels, column
+
     def get_winners_matrix(self, label):
         return self.get_matrix(label, col_index=0)
 

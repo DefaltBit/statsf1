@@ -77,7 +77,7 @@ def main():
 
     race = "Japon"
     driver = "Lewis HAMILTON"
-    n_years = 3
+    n_years = 5
 
     if mode == AppMode.DOWNLOAD.value:
         download(DATABASE_NAME)

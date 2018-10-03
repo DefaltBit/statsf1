@@ -267,18 +267,21 @@ class RaceExplorer(Explorer):
 
         for name, race in label_results.items():
             if race[0][0] != DNF:
-                col_index = None
-                if driver is not None:
-                    col_index = Matrix(race).get_column(1).index(driver)
+                try:
+                    col_index = None
+                    if driver is not None:
+                        col_index = Matrix(race).get_column(1).index(driver)
 
-                if chassis is not None:
-                    col_index = Matrix(race).get_column(2).index(chassis)
+                    if chassis is not None:
+                        col_index = Matrix(race).get_column(2).index(chassis)
 
-                data_column = Matrix(race).get_column(column)
-                if col_index is not None:
-                    data_column = [data_column[col_index]]
+                    data_column = Matrix(race).get_column(column)
+                    if col_index is not None:
+                        data_column = [data_column[col_index]]
 
-                label_results[name] = data_column
+                    label_results[name] = data_column
+                except:
+                    label_results[name] = [DNF]  # DNF race
             else:
                 label_results[name] = [DNF]  # discard DNFs races
 

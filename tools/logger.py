@@ -7,10 +7,12 @@
 import logging
 import threading
 
+# formatting
 LOG_THREAD_FORMAT = "thread-{} {} {}"
 LOG_RACES_FORMAT = "Found {} races"
 LOG_GOT_FORMAT = "Got {}"
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
 LOG_LEVEL = logging.DEBUG
 
 LOGGER = logging.getLogger("statsf1")

@@ -14,6 +14,7 @@ from statsf1.tools.stats import Statistician
 # format
 PREDICT_FORMAT = SOL + "Prediction at {} in {} using last {} " \
                        "years\n    {}"
+MATRIX_SHAPE_FORMAT = "Shape of matrix is {} rows x {} columns"
 
 # messages
 COEFFS_MESSAGE = SOL + "Coefficient of each class"
@@ -25,22 +26,40 @@ class Predictor:
         self.stats = Statistician(race, year, db, n_years)
         self.explorer = self.stats.explorer
 
+        self.years_before = 3
+        self.max_iterations = 10000
+
         self.rows = None
         self.columns = None
         self.matrix = None
         self.lb = None
 
-    def _get_data(self, data_label, driver=None, chassis=None):
+    def _get_data(self, data_label, driver=None, chassis=None, years_before=3):
         self.rows, self.columns, matrix = self.stats.get_matrix(
             data_label, driver=driver, chassis=chassis
         )
+
+        previous_data = Statistician(
+            self.explorer.raw_race,
+            str(int(self.explorer.raw_year) - 1),
+            self.explorer.db_name,
+            self.stats.n_years + years_before
+        ).get_race_matrix(data_label, driver=driver, chassis=chassis)[1]
+
+        for year in range(1, years_before + 1):  # update labels
+            self.columns.append(self.explorer.raw_race + "-" + str(year))
+
+        for i, row in enumerate(matrix):
+            for year in range(years_before):
+                matrix[i].append(previous_data[i + year])
 
         self._preprocess(matrix)
 
     def _preprocess(self, matrix):
         matrix = Matrix(matrix)  # prep-process: encode matrix
         self.matrix = matrix
-        # self.lb, self.matrix = matrix.encode()
+
+        # todo self.lb, self.matrix = matrix.encode()
 
     def _get_train_pred(self):
         _, x = self.matrix.remove_column(
@@ -101,8 +120,9 @@ class Predictor:
         return pred, coeffs, classes
 
     def _get_race_chassis_pos(self, chassis):
-        self._get_data("race pos", chassis=chassis)
-        regr = LinearSVC(max_iter=1000)
+        self._get_data("race pos", chassis=chassis,
+                       years_before=self.years_before)
+        regr = LinearSVC(max_iter=self.max_iterations)
         return self._predict_regr(regr)
 
     def print_race_chassis_pos(self, chassis, with_coeffs=True):
@@ -122,8 +142,9 @@ class Predictor:
             print(pretty_format_table(classes, [coeffs]))
 
     def _get_race_driver_pos(self, driver):
-        self._get_data("race pos", driver=driver)
-        regr = LinearSVC(max_iter=1000)
+        self._get_data("race pos", driver=driver,
+                       years_before=self.years_before)
+        regr = LinearSVC(max_iter=self.max_iterations)
         return self._predict_regr(regr)
 
     def print_race_driver_pos(self):
@@ -158,7 +179,7 @@ class Predictor:
 
 
 def run(race, driver, year, n_years, db):
-    print(TOL + "Chassis race winner")
+    print(TOL + "Chassis race position")
     available_chassis = Statistician(race, year, db, n_years).get_chassis()
     predictor = Predictor(race, year, db, n_years)
 
@@ -169,7 +190,7 @@ def run(race, driver, year, n_years, db):
     for chassis, position in sorted(data.items(), key=lambda x: x[1]):
         print(int(position), chassis)
 
-    print(TOL + "Driver race winner")
+    print(TOL + "Driver race position")
     available_drivers = Statistician(race, year, db, n_years).get_drivers()
     predictor = Predictor(race, year, db, n_years)
 
