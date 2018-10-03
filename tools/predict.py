@@ -6,7 +6,7 @@
 
 from hal.data.matrix import Matrix
 from hal.streams.pretty_table import pretty_format_table
-from sklearn.linear_model import LogisticRegression
+from sklearn.svm import LinearSVC
 
 from statsf1.data import SOL, NUM_FORMAT, TOL
 from statsf1.tools.stats import Statistician
@@ -16,7 +16,8 @@ PREDICT_FORMAT = SOL + "Prediction at {} in {} using last {} " \
                        "years\n    {}"
 
 # messages
-COEFFS_MESSAGE = SOL + "Probabilities of classes"
+COEFFS_MESSAGE = SOL + "Coefficient of each class"
+POSITION_MESSAGE = SOL + "{} position"
 
 
 class Predictor:
@@ -24,71 +25,117 @@ class Predictor:
         self.stats = Statistician(race, year, db, n_years)
         self.explorer = self.stats.explorer
 
-    def _predict(self, ml, label):
-        rows, columns, matrix = self.stats.get_races_matrix(label)
+        self.rows = None
+        self.columns = None
+        self.matrix = None
+        self.lb = None
 
+    def _get_data(self, data_label, driver=None, chassis=None):
+        self.rows, self.columns, matrix = self.stats.get_matrix(
+            data_label, driver=driver, chassis=chassis
+        )
+
+        self._preprocess(matrix)
+
+    def _preprocess(self, matrix):
         matrix = Matrix(matrix)  # prep-process: encode matrix
-        lb, matrix_num = matrix.encode()
+        self.matrix = matrix
+        # self.lb, self.matrix = matrix.encode()
 
-        _, x = matrix_num.remove_column(columns, self.explorer.raw_race)
-        y = matrix_num.get_column(columns.index(self.explorer.raw_race))
+    def _get_train_pred(self):
+        _, x = self.matrix.remove_column(
+            self.columns, self.explorer.raw_race
+        )
+        y = self.matrix.get_column(
+            self.columns.index(self.explorer.raw_race)
+        )
 
         num_features = len(x[0])
-        x_train = [row for row in x[1:]]  # do NOT train on predict data
+        x_train = [row for row in x[1:]]  # do NOT train on this year data
         y_train = [val for val in y[1:]]
         x_pred = x[0].reshape(1, num_features)  # vector to make predictions on
 
-        ml.fit(x_train, y_train)  # fit
+        return x_train, y_train, x_pred
 
-        pred_num = ml.predict(x_pred)  # predict
-        pred = lb.inverse_transform(pred_num)[0]  # post-process: decode
+    def _postprocess_regr(self, pred_num, regr):
+        pred = pred_num[0]
+        coeffs = regr.coef_[0]  # coefficients
+        classes = [
+            race
+            for race in self.columns
+            if race != self.explorer.raw_race
+        ]
 
-        classes = ml.classes_.tolist()  # prediction classes
-        coeffs = ml.predict_proba(x_pred)[0]  # probabilities of classes
+        return pred, coeffs, classes
 
-        return pred, coeffs, lb.inverse_transform(classes)
+    def _postprocess_clf(self, pred_num, clf):
+        pred = self.lb.inverse_transform(pred_num)[0]  # post-process: decode
+        classes = clf.classes_.tolist()  # prediction classes
+        classes = self.lb.inverse_transform(classes)  # parse
 
-    def print_race_chassis_win(self):
-        clf = LogisticRegression(solver='lbfgs', multi_class='multinomial',
-                                 max_iter=1000)
-        pred, coeffs, classes = self._predict(clf, "chassis")
+        return pred, classes
+
+    def _predict_clf(self, clf):
+        x_train, y_train, x_pred = self._get_train_pred()  # split
+
+        clf.fit(x_train, y_train)  # fit
+        pred_num = clf.predict(x_pred)  # predict
+
+        pred, classes = self._postprocess_clf(pred_num, clf)  # post-process
+        coeffs = clf.predict_proba(x_pred)[0]  # weights of classes
+
+        return pred, coeffs, classes
+
+    def _predict_regr(self, regr):
+        for i, row in enumerate(self.matrix.matrix):
+            for j, col in enumerate(row):
+                self.matrix.matrix[i][j] = float(self.matrix.matrix[i][j])
+
+        x_train, y_train, x_pred = self._get_train_pred()  # split
+
+        regr.fit(x_train, y_train)  # fit
+        pred_num = regr.predict(x_pred)  # predict
+
+        pred, coeffs, classes = self._postprocess_regr(pred_num, regr)  # post
+
+        return pred, coeffs, classes
+
+    def _get_race_chassis_pos(self, chassis):
+        self._get_data("race pos", chassis=chassis)
+        regr = LinearSVC(max_iter=1000)
+        return self._predict_regr(regr)
+
+    def print_race_chassis_pos(self, chassis, with_coeffs=True):
+        pred, coeffs, classes = self._get_race_chassis_pos(chassis)
 
         print(PREDICT_FORMAT.format(
             self.explorer.raw_race, self.explorer.raw_year,
             self.stats.n_years, pred
         ))
 
-        print(COEFFS_MESSAGE)
-        coeffs = [
-            NUM_FORMAT.format(coeff)
-            for coeff in coeffs
-        ]
-        print(pretty_format_table(classes, [coeffs]))
+        if with_coeffs:
+            print(COEFFS_MESSAGE)
+            coeffs = [
+                NUM_FORMAT.format(coeff)
+                for coeff in coeffs
+            ]
+            print(pretty_format_table(classes, [coeffs]))
 
-    def print_race_driver_win(self):
-        clf = LogisticRegression(solver='lbfgs', multi_class='multinomial',
-                                 max_iter=1000)
-        pred, coeffs, classes = self._predict(clf, "driver")
+    def _get_race_driver_pos(self, driver):
+        self._get_data("race pos", driver=driver)
+        regr = LinearSVC(max_iter=1000)
+        return self._predict_regr(regr)
 
-        print(PREDICT_FORMAT.format(
-            self.explorer.raw_race, self.explorer.raw_year,
-            self.stats.n_years, pred
-        ))
-
-        print(COEFFS_MESSAGE)
-        coeffs = [
-            NUM_FORMAT.format(coeff)
-            for coeff in coeffs
-        ]
-        print(pretty_format_table(classes, [coeffs]))
+    def print_race_driver_pos(self):
+        pass  # todo
 
     def print_q_driver_win(self):
         pass  # todo
 
-    def _get_q_chassis_win(self):
+    def _get_q_chassis_pos(self):
         return None  # todo
 
-    def print_q_chassis_win(self):
+    def print_q_chassis_pos(self):
         pass  # todo
 
     def _get_podium(self):
@@ -111,10 +158,24 @@ class Predictor:
 
 
 def run(race, driver, year, n_years, db):
-    pred = Predictor(race, year, db, n_years)
+    print(TOL + "Chassis race winner")
+    available_chassis = Statistician(race, year, db, n_years).get_chassis()
+    predictor = Predictor(race, year, db, n_years)
 
-    print(TOL + "Chassis winner")
-    pred.print_race_chassis_win()
+    data = {
+        chassis: predictor._get_race_chassis_pos(chassis)[0]
+        for chassis in available_chassis
+    }
+    for chassis, position in sorted(data.items(), key=lambda x: x[1]):
+        print(int(position), chassis)
 
-    print(TOL + "Driver winner")
-    pred.print_race_driver_win()
+    print(TOL + "Driver race winner")
+    available_drivers = Statistician(race, year, db, n_years).get_drivers()
+    predictor = Predictor(race, year, db, n_years)
+
+    data = {
+        driver: predictor._get_race_driver_pos(driver)[0]
+        for driver in available_drivers
+    }
+    for driver, position in sorted(data.items(), key=lambda x: x[1]):
+        print(int(position), driver)

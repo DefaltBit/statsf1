@@ -9,8 +9,8 @@ from hal.streams.pretty_table import pretty_format_table
 from scipy.stats import norm
 
 from statsf1.data import NUM_FORMAT, DNF, NORM_PROB_FORMAT, SOL, LOW_NUM_FORMAT, \
-    TOL
-from statsf1.tools.explorer import RaceExplorer
+    TOL, DNF_POS_VALUE
+from statsf1.tools.explorer import RaceExplorer, Explorer
 from statsf1.tools.utils import parse_time
 
 # formatting
@@ -98,12 +98,22 @@ class Statistician:
         self.explorer = RaceExplorer(race, year, db)
         self.n_years = n_years
 
-    def get_races_matrix(self, label):
-        max_year = int(self.explorer.raw_year) + 1  # including this year
+    def _get_years(self, including_this_year):
+        max_year = int(self.explorer.raw_year)
+        if including_this_year:
+            max_year += 1
+
         min_year = max_year - self.n_years - 1
-        years = range(min_year, max_year)
+        return range(min_year, max_year)
+
+    def get_matrix(self, data_label, col_index=0, driver=None, chassis=None,
+                   including_this_year=True):
+        years = self._get_years(including_this_year)
         results = {
-            str(year): self.explorer.get_results_of_label_on(label, str(year))
+            str(year):
+                self.explorer.get_results_of_label_on(
+                    data_label, str(year), driver=driver, chassis=chassis
+                )
             for year in years
         }  # all races results across all years
 
@@ -111,27 +121,54 @@ class Statistician:
             list(results.keys())  # result keys are the name of the races
             for year, results in results.items()
         ]) + [self.explorer.raw_race]  # races in common between years
+
         results = {
             year: {
                 race: data
                 for race, data in results.items() if race in races
             }
             for year, results in results.items()
-        }
+        }  # filter by race
 
         row_labels = sorted(results.keys())
         column_labels = sorted(results[row_labels[0]].keys())
+        row_labels = list(reversed(row_labels))  # from last year to oldest
         table = [
             [
-                results[year][race][0] if race in results[year] else DNF
-                for race in column_labels
+                results[year][race][col_index] if race in races else DNF
+                for race in column_labels  # get just winner
             ]
             for year in row_labels
         ]
 
-        row_labels = list(reversed(row_labels))  # from last year to oldest
-        table = list(reversed(table))
+        races_to_remove = [
+            i
+            for i, col in enumerate(column_labels)
+            if (table[0][i] == DNF and col != self.explorer.raw_race)
+        ]  # remove races that are not in all years
+        table = [
+            [
+                col
+                for i, col in enumerate(row)
+                if i not in races_to_remove
+            ]
+            for row in table
+        ]
+        column_labels = [
+            label
+            for i, label in enumerate(column_labels)
+            if i not in races_to_remove
+        ]
+
+        for i, row in enumerate(table):  # fix DNF data
+            for j, col in enumerate(row):
+                if col == DNF:
+                    table[i][j] = DNF_POS_VALUE
+
         return row_labels, column_labels, table
+
+    def get_winners_matrix(self, label):
+        return self.get_matrix(label, col_index=0)
 
     def _get_race_completes(self):
         _, summaries = self.explorer.get_previous_years_results(self.n_years)
@@ -341,6 +378,26 @@ class Statistician:
             driver, self.explorer.raw_race, first_year, last_year
         ))
         print(pretty_format_table(labels, summary))
+
+    def get_chassis(self, including_this_year=True):
+        years = self._get_years(including_this_year)
+        chassis = [
+            Explorer(
+                self.explorer.db_name
+            ).get_chassis(str(year))
+            for year in years
+        ]
+        return find_commons(chassis)  # chassis common in all races
+
+    def get_drivers(self, including_this_year=True):
+        years = self._get_years(including_this_year)
+        drivers = [
+            Explorer(
+                self.explorer.db_name
+            ).get_driver(str(year))
+            for year in years
+        ]
+        return find_commons(drivers)  # chassis common in all races
 
 
 def run(race, driver, year, n_years, n_drivers, db):

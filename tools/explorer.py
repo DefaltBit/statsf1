@@ -3,7 +3,7 @@
 
 
 """ Explore database """
-
+from hal.data.lists import find_commons
 from hal.data.matrix import Matrix
 from hal.mongodb.documents import DbBrowser
 from hal.streams.pretty_table import pretty_format_table
@@ -38,6 +38,22 @@ class Explorer:
             race
             for race in collection
         ]
+
+    def get_chassis(self, year):
+        races = self.get_races(year)
+        chassis = []
+        for race in races:
+            if "result" in race:
+                chassis.append(race["result"]["Ch\\xc3\\xa2ssis "])
+        return find_commons(chassis)  # common in all races
+
+    def get_driver(self, year):
+        races = self.get_races(year)
+        drivers = []
+        for race in races:
+            if "result" in race:
+                drivers.append(race["result"]["Pilote "])
+        return find_commons(drivers)  # common in all races
 
 
 class RaceExplorer(Explorer):
@@ -99,7 +115,7 @@ class RaceExplorer(Explorer):
 
     def get_drivers(self):
         race = self.get_race()
-        return race["result"]["Pilote "]
+        return list(set(race["result"]["Pilote "]))
 
     def get_race_summary(self):
         return self.get_results(
@@ -235,7 +251,7 @@ class RaceExplorer(Explorer):
             for race in races
         ]
 
-    def get_results_of_label_on(self, label, year):
+    def get_results_of_label_on(self, label, year, driver=None, chassis=None):
         names, races = self.get_results_on(year)
         results = [
             race[1]  # first element are the labels
@@ -249,11 +265,22 @@ class RaceExplorer(Explorer):
             for name, result in zip(names, results)
         }  # race name -> race result
 
-        label_results = {
-            name: Matrix(race).get_column(column)
-            for name, race in label_results.items()
-            if race[0][0] != DNF  # discard DNFs races
-        }
+        for name, race in label_results.items():
+            if race[0][0] != DNF:
+                col_index = None
+                if driver is not None:
+                    col_index = Matrix(race).get_column(1).index(driver)
+
+                if chassis is not None:
+                    col_index = Matrix(race).get_column(2).index(chassis)
+
+                data_column = Matrix(race).get_column(column)
+                if col_index is not None:
+                    data_column = [data_column[col_index]]
+
+                label_results[name] = data_column
+            else:
+                label_results[name] = [DNF]  # discard DNFs races
 
         return label_results
 
