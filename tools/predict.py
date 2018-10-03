@@ -15,6 +15,7 @@ from statsf1.tools.stats import Statistician
 PREDICT_FORMAT = SOL + "Prediction at {} in {} using last {} " \
                        "years\n    {}"
 MATRIX_SHAPE_FORMAT = "Shape of matrix is {} rows x {} columns"
+STANDINGS_FORMAT = "{:>2}) {} (accuracy = {:.2f})"
 
 # messages
 COEFFS_MESSAGE = SOL + "Coefficient of each class"
@@ -150,11 +151,17 @@ class Predictor:
     def print_race_driver_pos(self):
         pass  # todo
 
-    def print_q_driver_win(self):
-        pass  # todo
+    def _get_q_driver_pos(self, driver):
+        self._get_data("Q pos", driver=driver,
+                       years_before=self.years_before)
+        regr = LinearSVC(max_iter=self.max_iterations)
+        return self._predict_regr(regr)
 
-    def _get_q_chassis_pos(self):
-        return None  # todo
+    def _get_q_chassis_pos(self, chassis):
+        self._get_data("Q pos", chassis=chassis,
+                       years_before=self.years_before)
+        regr = LinearSVC(max_iter=self.max_iterations)
+        return self._predict_regr(regr)
 
     def print_q_chassis_pos(self):
         pass  # todo
@@ -178,25 +185,41 @@ class Predictor:
         pass  # todo
 
 
-def run(race, driver, year, n_years, db):
-    print(TOL + "Chassis race position")
-    available_chassis = Statistician(race, year, db, n_years).get_chassis()
-    predictor = Predictor(race, year, db, n_years)
-
-    data = {
-        chassis: predictor._get_race_chassis_pos(chassis)[0]
-        for chassis in available_chassis
-    }
+def print_standings(data):
     for chassis, position in sorted(data.items(), key=lambda x: x[1]):
-        print(int(position), chassis)
+        accuracy = 1 - abs(round(position) - position)
+        print(STANDINGS_FORMAT.format(str(int(position)), chassis, accuracy))
 
-    print(TOL + "Driver race position")
+
+def run(race, driver, year, n_years, db):
     available_drivers = Statistician(race, year, db, n_years).get_drivers()
+    available_chassis = Statistician(race, year, db, n_years).get_chassis()
     predictor = Predictor(race, year, db, n_years)
 
     data = {
         driver: predictor._get_race_driver_pos(driver)[0]
         for driver in available_drivers
     }
-    for driver, position in sorted(data.items(), key=lambda x: x[1]):
-        print(int(position), driver)
+    print(TOL + "Driver race position")
+    print_standings(data)
+
+    data = {
+        chassis: predictor._get_race_chassis_pos(chassis)[0]
+        for chassis in available_chassis
+    }
+    print(TOL + "Chassis race position")
+    print_standings(data)
+
+    data = {
+        driver: predictor._get_q_driver_pos(driver)[0]
+        for driver in available_drivers
+    }
+    print(TOL + "Driver qualifications position")
+    print_standings(data)
+
+    data = {
+        chassis: predictor._get_race_chassis_pos(chassis)[0]
+        for chassis in available_chassis
+    }
+    print(TOL + "Chassis qualifications position")
+    print_standings(data)
