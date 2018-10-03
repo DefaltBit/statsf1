@@ -4,6 +4,7 @@
 </div>
 
 <div align="center">
+<a href="https://snyk.io/test/github/sirfoga/statsf1"><img alt="Known Vulnerabilities" src="https://snyk.io/test/github/sirfoga/statsf1/badge.svg"></a><br>
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a> <a href="https://opensource.org/licenses/MIT"><img alt="Open Source Love" src="https://badges.frapsoft.com/os/v1/open-source.svg?v=103"></a> <a href="https://github.com/sirfoga/statsf1/issues"><img alt="Contributions welcome" src="https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat"></a>
 </div>
 
@@ -138,6 +139,10 @@ Running `pip3 install .` will take care of all dependencies. Moreover you need t
 
 ## Feedback
 Suggestions and improvements are [welcome](https://github.com/sirfoga/statsf1/issues)!
+
+
+## License
+[MIT License](https://opensource.org/licenses/MIT)
 
 
 ## Authors

@@ -39,6 +39,77 @@ class Explorer:
             for race in collection
         ]
 
+    def get_year_values(self, year, races, category, label, driver, chassis,
+                        position):
+        all_races = [
+            race
+            for race in self.get_races(year)  # all races of year
+            if race["name"] in races  # just selected races
+        ]
+        categories = [
+            race[category]
+            for race in all_races
+        ]  # just selected category
+        columns = [
+            category[label]
+            for category in categories
+        ]  # just selected label
+
+        if position is None:  # find by driver or chassis
+            if driver is not None:  # find by driver
+                position = categories[0]["Pilote "].index(driver)
+            else:  # find by chassis
+                position = categories[0]["Ch\\xc3\\xa2ssis "].index(chassis)
+        values = [
+            column[position]
+            for column in columns
+        ]  # get selected
+
+        return values
+
+    def get_matrix(self, years, races, category, label, driver=None,
+                   chassis=None, position=None):
+        """
+        :param years: [] of str
+            Years to get
+        :param races: [] of str
+            Get all the following races. Raises error if any of the race is
+            not found across ALL specified years
+        :param category: str
+            Race category, e.g "race_entrants", "qualifications" ...
+        :param label: str
+            Result label, e.g "Tour", "Moyenne", "Pos" ...
+        :param driver: str
+            Get results of this driver
+        :param chassis: str
+            Get results of this chassis
+        :param position: int
+            Get i-th results based on category index, e.g 0 means get the winner
+        :return: [] of [] of str
+            Each column is a race. Each row is a year. Each cell is the
+            result of the label of the category at race of year.
+        """
+
+        if driver is None and chassis is None and position is None:
+            raise ValueError("driver, chassis or position MUST be specified")
+
+        specified_index = [
+            x
+            for x in [driver, chassis, position]
+            if x is not None
+        ]
+        if len(specified_index) > 1:
+            raise ValueError("exactly 1 among driver, chassis and position "
+                             "MUST be specified")
+        matrix = [
+            self.get_year_values(
+                year, races, category, label, driver, chassis, position
+            )
+            for year in years
+        ]
+
+        return matrix
+
     def get_chassis(self, year):
         races = self.get_races(year)
         chassis = []
@@ -76,10 +147,9 @@ class RaceExplorer(Explorer):
 
     def get_race(self):
         if self.race is None:
-            documents = self.db.get_documents_in_collection(self.raw_year)
             race = [
                 race
-                for race in documents
+                for race in self.get_races(self.raw_year)
                 if race["name"] == self.raw_race
             ]
 
