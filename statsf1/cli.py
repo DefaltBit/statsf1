@@ -5,21 +5,16 @@
 """ Command line tool """
 
 import argparse
-import datetime
 from enum import Enum
 
-from statsf1.tools.download import download
 from statsf1.tools.explorer import run as explore
 from statsf1.tools.predict import run as predict
 from statsf1.tools.stats import run as stats
-from statsf1.tools.update import download as update
 
 DATABASE_NAME = "statsf1"  # name of mongodb database to use
 
 
 class AppMode(Enum):
-    DOWNLOAD = "download"
-    UPDATE = "update"
     EXPLORE = "explore"
     STATS = "stats"
     PREDICT = "predict"
@@ -27,8 +22,6 @@ class AppMode(Enum):
     @staticmethod
     def available():
         return [
-            AppMode.DOWNLOAD.value,
-            AppMode.UPDATE.value,
             AppMode.EXPLORE.value,
             AppMode.STATS.value,
             AppMode.PREDICT.value
@@ -79,12 +72,7 @@ def main():
     driver = "Lewis HAMILTON"
     n_years = 5
 
-    if mode == AppMode.DOWNLOAD.value:
-        download(DATABASE_NAME)
-    elif mode == AppMode.UPDATE.value:
-        now = datetime.datetime.now()
-        update(str(now.year), DATABASE_NAME)
-    elif mode == AppMode.EXPLORE.value:
+    if mode == AppMode.EXPLORE.value:
         explore(DATABASE_NAME)
     elif mode == AppMode.STATS.value:
         year = 2017
