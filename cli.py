@@ -92,7 +92,7 @@ def main():
         stats(race, driver, year, n_years, n_drivers, DATABASE_NAME)
     elif mode == AppMode.PREDICT.value:
         year = 2018
-        predict(race, driver, year, n_years, DATABASE_NAME)
+        predict(race, year, n_years, DATABASE_NAME)
 
 
 if __name__ == '__main__':
