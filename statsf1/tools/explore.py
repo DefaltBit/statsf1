@@ -9,6 +9,7 @@ import abc
 import pandas as pd
 from hal.data.lists import find_commons
 from hal.data.matrix import Matrix
+from hal.maths.utils import get_percentage_relative_to
 from hal.mongodb.models import DbBrowser
 
 from statsf1.data import DNF, SOL, TOL
@@ -23,6 +24,14 @@ AVAILABLE_RACES = "Available races in {}:"
 # errors
 NOT_FOUND_EXCEPTION = "Cannot find {} in db"
 WRONG_KEY_EXCEPTION = "{} not a valid key in db. Available are {}"
+
+
+def has_completed_race(laps, race_laps, ratio=0.9):
+    laps = float(laps)
+    race_laps = float(race_laps)
+    min_laps_to_have_completed = race_laps * ratio
+
+    return laps >= min_laps_to_have_completed
 
 
 class DbNotFoundException(Exception):
@@ -45,6 +54,15 @@ class Explorer:
         self.db_name = db
         self.db = DbBrowser(self.db_name)  # db browser
 
+    def get_weekend(self, year, race):
+        return [
+            x
+            for x in self.db.get_collection(year).find({"name": race})
+        ][0]  # get first weekend found
+
+    def count_weekends(self):
+        return self.db.get_documents_count()
+
     @staticmethod
     def _get_year_collection(year):
         return str(year)
@@ -52,20 +70,6 @@ class Explorer:
     @staticmethod
     def _get_race_collection(race_name):
         return str(race_name)
-
-    def count_weekends(self):
-        return self.db.get_documents_count()
-
-
-class WeekendExplorer(Explorer):
-    def __init__(self, db):
-        super().__init__(db)
-
-        self.weekends = self._get_weekends()
-
-    @abc.abstractmethod
-    def _get_weekends(self):
-        return pd.DataFrame()
 
     @staticmethod
     def _is_valid_weekend(weekend):
@@ -75,7 +79,18 @@ class WeekendExplorer(Explorer):
 
         return True
 
-    def _get_weekends_label(self, label):
+
+class WeekendsExplorer(Explorer):
+    def __init__(self, db):
+        super().__init__(db)
+
+        self.weekends = self._get_weekends()
+
+    @abc.abstractmethod
+    def _get_weekends(self):
+        return pd.DataFrame()
+
+    def _get_label(self, label):
         if label not in self.WEEKEND_LABELS:
             raise DbWrongKeyException(label, self.WEEKEND_LABELS)
         count = self.weekends.shape[0]  # how many weekends
@@ -85,49 +100,49 @@ class WeekendExplorer(Explorer):
             for i in range(count)
         ]
 
-    def _get_weekends_key(self, key):
+    def _get_key(self, key):
         if key not in self.WEEKEND_KEYS:
             raise DbWrongKeyException(key, self.WEEKEND_KEYS)
 
-        labels = self._get_weekends_label(key)
+        labels = self._get_label(key)
         return [
             str(label)
             for label in labels
         ]
 
-    def _get_weekends_category(self, category):
+    def _get_category(self, category):
         if category not in self.WEEKEND_CATEGORIES:
             raise DbWrongKeyException(category, self.WEEKEND_CATEGORIES)
 
-        categories = self._get_weekends_label(category)
+        categories = self._get_label(category)
         return [
             pd.DataFrame(data) if not pd.isna(data) else pd.DataFrame()
             for data in categories
         ]
 
     def get_results(self):
-        return self._get_weekends_category("result")
+        return self._get_category("result")
 
     def get_race_entrants(self):
-        return self._get_weekends_category("race_entrants")
+        return self._get_category("race_entrants")
 
     def get_qualifications(self):
-        return self._get_weekends_category("qualifications")
+        return self._get_category("qualifications")
 
     def get_best_laps(self):
-        return self._get_weekends_category("best_laps")
+        return self._get_category("best_laps")
 
     def get_names(self):
-        return self._get_weekends_key("name")
+        return self._get_key("name")
 
     def get_years(self):
-        return self._get_weekends_key("year")
+        return self._get_key("year")
 
     def get_urls(self):
-        return self._get_weekends_key("url")
+        return self._get_key("url")
 
 
-class ByYearExplorer(WeekendExplorer):
+class ByYearExplorer(WeekendsExplorer):
     def __init__(self, db, year):
         self.year = self._get_year_collection(year)
 
@@ -138,7 +153,7 @@ class ByYearExplorer(WeekendExplorer):
         return pd.DataFrame(data=collection)
 
 
-class ByWeekendExplorer(WeekendExplorer):
+class ByWeekendsExplorer(WeekendsExplorer):
     def __init__(self, db, race):
         self.race = self._get_race_collection(race)
 
@@ -157,11 +172,113 @@ class ByWeekendExplorer(WeekendExplorer):
 
 
 class WeekendExplorer(Explorer):
+    RACE_FINISHES_KEY = "Race completed?"
+    RACE_VS_Q_POS_KEY = "Race pos VS Q pos"
+    BEST_LAP_VS_Q_TIME_KEY = "Best lap VS Q time"
+    BEST_LAP_VS_Q_POS_KEY = "Best lap VS Q pos"
+    EXTRA_KEYS = [RACE_FINISHES_KEY, RACE_VS_Q_POS_KEY,
+                  BEST_LAP_VS_Q_TIME_KEY, BEST_LAP_VS_Q_POS_KEY]
+
     def __init__(self, db, year, race):
         super().__init__(db)
 
         self.year = self._get_year_collection(year)
         self.race = self._get_race_collection(race)
+        self.weekend = self.get_weekend(self.year, self.race)
+
+    def _get_label(self, label):
+        if label not in self.WEEKEND_LABELS:
+            raise DbWrongKeyException(label, self.WEEKEND_LABELS)
+
+        return self.weekend[label]
+
+    def _get_key(self, key):
+        if key not in self.WEEKEND_KEYS:
+            raise DbWrongKeyException(key, self.WEEKEND_KEYS)
+
+        label = self._get_label(key)
+        return str(label)
+
+    def _get_category(self, category):
+        if category not in self.WEEKEND_CATEGORIES:
+            raise DbWrongKeyException(category, self.WEEKEND_CATEGORIES)
+
+        data = self._get_label(category)
+        if not pd.isna(data):
+            return pd.DataFrame(data)
+
+        return pd.DataFrame()
+
+    def get_category_key(self, category, key):
+        data = self._get_category(category)
+        data = data[key]
+        return pd.DataFrame(data)
+
+    def get_results(self):
+        return self._get_category("result")
+
+    def get_race_entrants(self):
+        return self._get_category("race_entrants")
+
+    def get_qualifications(self):
+        return self._get_category("qualifications")
+
+    def get_best_laps(self):
+        return self._get_category("best_laps")
+
+    def get_name(self):
+        return self._get_key("name")
+
+    def get_year(self):
+        return self._get_key("year")
+
+    def get_url(self):
+        return self._get_key("url")
+
+    def get_race_finishes(self):
+        laps = self.get_category_key("result", "Tour ")
+        race_laps = max(laps)
+        laps = laps.apply(has_completed_race, race_laps=race_laps)
+
+        return pd.DataFrame(laps, columns=[self.RACE_FINISHES_KEY])
+
+    def get_race_vs_q_pos(self):
+        race_pos = self.get_category_key("result", "Pilote ")
+        q_pos = self.get_category_key("qualifications", "Pilote ")
+        race_vs_q = [
+            q_pos.index[q_pos["Pilote "] == driver].tolist()[0]  # first index
+            for driver in race_pos["Pilote "]
+        ]
+
+        return pd.DataFrame(race_vs_q, columns=[self.RACE_VS_Q_POS_KEY])
+
+    def get_best_lap_vs_q_pos(self):
+        best_lap_pos = self.get_category_key("best_laps", "Pilote ")
+        q_pos = self.get_category_key("qualifications", "Pilote ")
+        best_lap_vs_q = [
+            q_pos.index[q_pos["Pilote "] == driver].tolist()[0]  # first index
+            for driver in best_lap_pos["Pilote "]
+        ]
+
+        return pd.DataFrame(best_lap_vs_q, columns=[self.BEST_LAP_VS_Q_POS_KEY])
+
+    def get_best_lap_vs_q_time(self):
+        best_lap_pos = self.get_category_key("best_laps", "Pilote ")
+        best_lap_time = self.get_category_key("best_laps", "Pilote ")
+
+        q_pos = self.get_category_key("qualifications", "Temps ")
+        q_time = self.get_category_key("qualifications", "Temps ")
+
+        best_lap_vs_q = [
+            get_percentage_relative_to(
+                best_lap_time[i],
+                q_time[q_pos.index[q_pos["Pilote "] == driver].tolist()[0]]
+            )
+            for i, driver in best_lap_pos["Pilote "].items()
+        ]  # order by best lap times
+
+        return pd.DataFrame(best_lap_vs_q,
+                            columns=[self.BEST_LAP_VS_Q_TIME_KEY])
 
     def get_race_by_name(self, year, race_name):
         races = [
