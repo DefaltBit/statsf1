@@ -25,13 +25,5 @@ setup(
     keywords="f1 scikit-learn mongodb",
     url="https://github.com/sirfoga/statsf1",
     packages=find_packages(exclude=["tests"]),
-    install_requires=[
-        'pyhal',
-        "scipy",
-        "setuptools",
-        "pymongo",
-        "PyHal",
-        "scikit_learn"
-    ],
     test_suite="tests"
 )

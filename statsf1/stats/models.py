@@ -4,13 +4,13 @@
 
 """ Gets stats about db """
 
-from hal.data.lists import find_commons
-from hal.streams.pretty_table import pretty_format_table
+import numpy as np
+import pandas as pd
 from scipy.stats import norm
 
-from statsf1.data import NUM_FORMAT, DNF, NORM_PROB_FORMAT, SOL, LOW_NUM_FORMAT, \
-    TOL, DNF_POS_VALUE
-from statsf1.explore import Explorer
+from statsf1.data import NUM_FORMAT, NORM_PROB_FORMAT, SOL, LOW_NUM_FORMAT, \
+    TOL
+from statsf1.explore.models import SummaryExplorer, WeekendExplorer
 from statsf1.tools.parse import parse_time
 
 # formatting
@@ -79,174 +79,33 @@ def compare_to_stakes(probabilities, stakes):
     ]  # compare predicted probability with staked one
 
 
-class Statistician:
-    def __init__(self, race, year, db, n_years):
-        self.explorer = RaceExplorer(race, year, db)
-        self.n_years = n_years
+class Statistician(SummaryExplorer):
+    def __init__(self, db, years):
+        super().__init__(db, years)
 
-    def _get_years(self, including_this_year):
-        max_year = int(self.explorer.raw_year)
-        if including_this_year:
-            max_year += 1
-
-        min_year = max_year - self.n_years - 1
-        return range(min_year, max_year)
-
-    def get_matrix(self, data_label, col_index=0, driver=None, chassis=None,
-                   including_this_year=True):
-        years = self._get_years(including_this_year)
-        results = {
-            str(year):
-                self.explorer.get_results_of_label_on(
-                    data_label, str(year), driver=driver, chassis=chassis
-                )
-            for year in years
-        }  # all races results across all years
-
-        races = find_commons([
-            list(results.keys())  # result keys are the name of the races
-            for year, results in results.items()
-        ]) + [self.explorer.raw_race]  # races in common between years
-
-        results = {
-            year: {
-                race: data
-                for race, data in results.items() if race in races
-            }
-            for year, results in results.items()
-        }  # filter by race
-
-        row_labels = sorted(results.keys())
-        column_labels = sorted(results[row_labels[0]].keys())
-        row_labels = list(reversed(row_labels))  # from last year to oldest
-        table = [
-            [
-                results[year][race][col_index] if race in races else DNF
-                for race in column_labels  # get just winner
-            ]
-            for year in row_labels
+    @staticmethod
+    def _parse_values(values, nan_value):
+        return [
+            value if not pd.isna(value) else nan_value
+            for value in values
         ]
 
-        races_to_remove = [
-            i
-            for i, col in enumerate(column_labels)
-            if (table[0][i] == DNF and col != self.explorer.raw_race)
-        ]  # remove races that are not in all years
-        table = [
-            [
-                col
-                for i, col in enumerate(row)
-                if i not in races_to_remove
-            ]
-            for row in table
-        ]
-        column_labels = [
-            label
-            for i, label in enumerate(column_labels)
-            if i not in races_to_remove
-        ]
+    def get_race_finishes(self):
+        summary = self.get_column_summary(WeekendExplorer.RACE_FINISHES_KEY)
 
-        for i, row in enumerate(table):  # fix DNF data
-            for j, col in enumerate(row):
-                if col == DNF:
-                    table[i][j] = DNF_POS_VALUE
+        for row in range(summary.shape[0]):
+            for col in range(1, summary.shape[1]):  # not count year
+                weekend_column = summary.iloc[row][col]
 
-        return row_labels, column_labels, table
+                try:
+                    weekend_column = self._parse_values(weekend_column, False)
+                    race_finishes = weekend_column.count(True)
+                    summary.iloc[row, col] = race_finishes
+                except:
+                    summary.iloc[row, col] = np.nan
 
-    def get_race_matrix(self, data_label, col_index=0, driver=None,
-                        chassis=None, including_this_year=True):
-        row_labels, column_labels, table = self.get_matrix(
-            data_label, col_index=col_index, driver=driver,
-            chassis=chassis, including_this_year=including_this_year
-        )
+        return summary
 
-        race_index = column_labels.index(self.explorer.raw_race)
-        column = [
-            row[race_index]
-            for row in table
-        ]
-        return row_labels, column
-
-    def get_winners_matrix(self, label):
-        return self.get_matrix(label, col_index=0)
-
-    def _get_race_completes(self):
-        _, summaries = self.explorer.get_previous_years_results(self.n_years)
-        summary = {
-            year: float(len([
-                row[4]
-                for row in data
-                if row[4] == "yes"
-            ])) / len(data)  # ratio
-            for year, data in summaries.items()
-        }
-        x = [
-            count for year, count in summary.items()
-        ]
-
-        return norm.fit(x)
-
-    def print_race_completes(self, n_drivers, stakes):
-        mu, std = self._get_race_completes()
-        mu = n_drivers * mu
-        std = n_drivers * std
-        gauss = norm(mu, std)
-
-        probabilities = []
-        for prob in COMPLETES_PROBS:
-            probabilities.append(1.0 - gauss.cdf(prob + 0.5))  # discreet
-            probabilities.append(gauss.cdf(prob - 0.5))
-
-        stakes = get_probabilities(stakes)
-        stakes = compare_to_stakes(probabilities, stakes)
-
-        print_probabilities_summary(
-            NORM_DISTRIBUTION_FORMAT.format(mu, std),
-            sum([2 * [x] for x in COMPLETES_PROBS], []),
-            probabilities,
-            stakes,
-            [GT_PROB_FORMAT, LT_PROB_FORMAT] * len(COMPLETES_PROBS)
-        )
-
-    def _get_driver_completes(self):
-        _, summaries = self.explorer.get_previous_years_results(self.n_years)
-        summary = {}
-
-        for _, summ in summaries.items():
-            drivers = [
-                row[1] for row in summ
-            ]
-            completed = [
-                row[4] for row in summ
-            ]
-
-            for driver, has_completed in zip(drivers, completed):
-                if driver not in summary:
-                    summary[driver] = {
-                        "count": 0.0,
-                        "completed": 0.0
-                    }
-
-                if has_completed == "yes":
-                    summary[driver]["completed"] += 1
-
-                summary[driver]["count"] += 1
-
-        return {
-            driver: data["completed"] / data["count"]  # ratio
-            for driver, data in summary.items()
-        }
-
-    def print_driver_completes(self):
-        summary = self._get_driver_completes()
-        summary = sorted(summary.items(),
-                         key=lambda x: x[0].split(" ")[-1])  # surname
-
-        print(COMPLETES_MESSAGE)
-        for driver, prob in sorted(summary, key=lambda x: x[1], reverse=True):
-            if prob < 1:
-                msg = PROB_FORMAT.format(driver, prob)
-                print("{:>30}".format(msg))
 
     def _get_qualify_margin(self):
         _, summaries = self.explorer.get_previous_years_results(self.n_years)
@@ -260,26 +119,6 @@ class Statistician:
 
         return norm.fit(x)
 
-    def print_qualify_margin(self, stakes):
-        mu, std = self._get_qualify_margin()
-        gauss = norm(mu, std)
-
-        probabilities = [
-            gauss.cdf(WIN_QUALIFY_PROBS[0]),
-            gauss.cdf(WIN_QUALIFY_PROBS[1]) - gauss.cdf(WIN_QUALIFY_PROBS[0]),
-            1.0 - gauss.cdf(WIN_QUALIFY_PROBS[1])
-        ]
-
-        stakes = get_probabilities(stakes)
-        stakes = compare_to_stakes(probabilities, stakes)
-
-        print_probabilities_summary(
-            NORM_DISTRIBUTION_FORMAT.format(mu, std),
-            WIN_QUALIFY_PROBS,
-            probabilities,
-            stakes,
-            [LT_PROB_FORMAT, IN_BETWEEN_PROB_FORMAT, GT_PROB_FORMAT]
-        )
 
     def _get_race_margin(self):
         _, summaries = self.explorer.get_previous_years_results(self.n_years)
@@ -293,26 +132,6 @@ class Statistician:
 
         return norm.fit(x)
 
-    def print_race_margin(self, stakes):
-        mu, std = self._get_race_margin()
-        gauss = norm(mu, std)
-
-        probabilities = [
-            gauss.cdf(WIN_RACE_PROBS[0]),
-            gauss.cdf(WIN_RACE_PROBS[1]) - gauss.cdf(WIN_RACE_PROBS[0]),
-            1.0 - gauss.cdf(WIN_RACE_PROBS[1])
-        ]
-
-        stakes = get_probabilities(stakes)
-        stakes = compare_to_stakes(probabilities, stakes)
-
-        print_probabilities_summary(
-            NORM_DISTRIBUTION_FORMAT.format(mu, std),
-            WIN_RACE_PROBS,
-            probabilities,
-            stakes,
-            [LT_PROB_FORMAT, IN_BETWEEN_PROB_FORMAT, GT_PROB_FORMAT]
-        )
 
     def _get_winner_q_position(self):
         _, summaries = self.explorer.get_previous_years_results(self.n_years)
@@ -325,79 +144,6 @@ class Statistician:
         ]
 
         return norm.fit(x)
-
-    def print_winner_q_position(self, n_drivers, stakes):
-        mu, std = self._get_winner_q_position()
-        gauss = norm(mu, std)
-
-        raw_probs = [
-            gauss.cdf(pos + 0.5) - gauss.cdf(pos - 0.5)  # discreet
-            for pos in range(1, n_drivers + 1)
-        ]
-
-        probabilities = []  # calculate prob for given stakes
-        for stake in WIN_Q_PROBS:
-            if "-" in stake:
-                max_pos = int(stake.split("-")[-1])
-                min_pos = int(stake.split("-")[0])
-                prob = sum(
-                    raw_probs[i]
-                    for i in range(min_pos - 1, max_pos)
-                )
-            else:
-                pos = int(stake)
-                prob = raw_probs[pos - 1]
-
-            probabilities.append(prob)
-
-        stakes = get_probabilities(stakes)
-        stakes = compare_to_stakes(probabilities, stakes)
-
-        print_probabilities_summary(
-            NORM_DISTRIBUTION_FORMAT.format(mu, std),
-            WIN_Q_PROBS,
-            probabilities,
-            stakes,
-            [PROB_FORMAT] * n_drivers
-        )
-
-    def print_summary(self):
-        labels, summary = self.explorer.get_weekend_matrix()
-        print(RACE_SUMMARY_FORMAT.format(
-            self.explorer.raw_race, self.explorer.raw_year
-        ))
-        print(pretty_format_table(labels, summary[:10]))
-
-    def print_driver_summary(self, driver):
-        labels, summary = \
-            self.explorer.get_previous_years_matrix(self.n_years, driver)
-        first_year = summary[-1][0]
-        last_year = summary[0][0]
-
-        print(DRIVER_SUMMARY_FORMAT.format(
-            driver, self.explorer.raw_race, first_year, last_year
-        ))
-        print(pretty_format_table(labels, summary))
-
-    def get_chassis(self, including_this_year=True):
-        years = self._get_years(including_this_year)
-        chassis = [
-            Explorer(
-                self.explorer.db_name
-            ).get_chassis(str(year))
-            for year in years
-        ]
-        return find_commons(chassis)  # chassis common in all races
-
-    def get_drivers(self, including_this_year=True):
-        years = self._get_years(including_this_year)
-        drivers = [
-            Explorer(
-                self.explorer.db_name
-            ).get_driver(str(year))
-            for year in years
-        ]
-        return find_commons(drivers)  # chassis common in all races
 
 
 def run(race, driver, year, n_years, n_drivers, db):

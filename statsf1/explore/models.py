@@ -260,7 +260,7 @@ class WeekendExplorer(Explorer):
         ]
         race_laps = max(laps)
         laps = pd.Series(laps)
-        laps.apply(has_completed_race, race_laps=race_laps)
+        laps = laps.apply(has_completed_race, race_laps=race_laps)
 
         return pd.DataFrame(laps, columns=[self.RACE_FINISHES_KEY])
 
@@ -358,7 +358,7 @@ class WeekendExplorer(Explorer):
 
         summary = self.get_summary()
         column = summary[key]
-        return column.tolist()[0]
+        return column.tolist()
 
     def get_driver_summary(self, key, driver):
         if key not in self.WEEKEND_SUMMARY_KEYS:

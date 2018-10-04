@@ -1,3 +1,6 @@
+numpy
+pandas
+PyHal>=10.0.6
 scipy>=0.19.1
 setuptools>=39.0.1
 pymongo>=3.7.1
