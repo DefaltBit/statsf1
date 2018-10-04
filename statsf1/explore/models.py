@@ -139,7 +139,7 @@ class ByYearExplorer(WeekendsExplorer):
         return pd.DataFrame(data=collection)
 
 
-class ByWeekendsExplorer(WeekendsExplorer):
+class ByWeekendExplorer(WeekendsExplorer):
     def __init__(self, db, weekend):
         self.weekend = self._get_weekend_collection(weekend)
 
