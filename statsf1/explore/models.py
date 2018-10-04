@@ -280,14 +280,6 @@ class WeekendExplorer(Explorer):
         return pd.DataFrame(best_lap_vs_q,
                             columns=[self.BEST_LAP_VS_Q_TIME_KEY])
 
-    def get_race_by_name(self, year, race_name):
-        races = [
-            race
-            for race in self.get_weekends(year)
-            if race["name"] == race_name
-        ]
-        return races[0]
-
     def get_year_values(self, year, races, category, label, driver, chassis,
                         position):
         all_races = [

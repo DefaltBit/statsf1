@@ -9,7 +9,7 @@ from hal.streams.pretty_table import pretty_format_table
 from sklearn.ensemble import AdaBoostRegressor, GradientBoostingClassifier
 
 from statsf1.data import SOL, NUM_FORMAT, TOL
-from statsf1.tools.stats import Statistician
+from statsf1.stats.models import Statistician
 
 # format
 PREDICT_FORMAT = SOL + "Prediction at {} in {} using last {} " \

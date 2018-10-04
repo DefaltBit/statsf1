@@ -7,9 +7,9 @@
 import argparse
 from enum import Enum
 
-from statsf1.tools.explore import run as explore
-from statsf1.tools.predict import run as predict
-from statsf1.tools.stats import run as stats
+from statsf1.explore import run as explore
+from statsf1.predict.models import run as predict
+from statsf1.stats.models import run as stats
 
 DATABASE_NAME = "statsf1"  # name of mongodb database to use
 
