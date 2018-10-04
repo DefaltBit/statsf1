@@ -11,7 +11,7 @@ from scipy.stats import norm
 from statsf1.data import NUM_FORMAT, DNF, NORM_PROB_FORMAT, SOL, LOW_NUM_FORMAT, \
     TOL, DNF_POS_VALUE
 from statsf1.explore import Explorer
-from statsf1.tools.utils import parse_time
+from statsf1.tools.parse import parse_time
 
 # formatting
 COMPLETES_FORMAT = "# past years = {}\n" \

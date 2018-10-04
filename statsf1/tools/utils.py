@@ -4,31 +4,36 @@
 
 """ Tools and data """
 
-MINUTES_TOKEN = "'"
-SECONDS_TOKEN = "''"
-PRETTY_SECONDS_TOKEN = "\""
+import numpy as np
 
-HOURS_TOKEN = "h"
+from statsf1.tools.parse import pretty_time, parse_time
 
 
-def parse_hours_time(time):
-    tokens = time.split(" ")
-    hours = float(tokens[0][:-1])
-    minutes = float(tokens[1][:-1])
-    seconds = float(tokens[2][:-1])
-    return hours * 60 * 60 + minutes * 60 + seconds  # reconds
+def has_completed_race(laps, race_laps, ratio=0.9):
+    laps = float(laps)
+    race_laps = float(race_laps)
+    min_laps_to_have_completed = race_laps * ratio
+
+    return laps >= min_laps_to_have_completed
 
 
-def parse_time(time, minutes_split=MINUTES_TOKEN,
-               seconds_split=PRETTY_SECONDS_TOKEN):
-    if HOURS_TOKEN in time:
-        return parse_hours_time(time)
-
-    minutes = float(time.split(minutes_split)[0])
-    seconds = float(time.split(seconds_split)[0].split(minutes_split)[1])
-    decimals = float(time.split(seconds_split)[1])
-    return minutes * 60.0 + seconds + decimals / 1000.0  # seconds
+def get_position(raw_position):
+    try:
+        return float(raw_position)
+    except:
+        return np.nan  # default position when driver DNF
 
 
-def pretty_time(time):
-    return time.replace(SECONDS_TOKEN, PRETTY_SECONDS_TOKEN)
+def get_lap(lap):
+    try:
+        return int(lap)
+    except:
+        return np.nan
+
+
+def get_time(raw_time):
+    try:
+        raw_time = pretty_time(raw_time)
+        return parse_time(raw_time)
+    except:
+        return np.nan
