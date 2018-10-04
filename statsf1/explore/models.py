@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 from hal.maths.utils import get_percentage_relative_to
 from hal.mongodb.models import DbBrowser
-from hal.streams.pretty_table import pretty_df
 
 from statsf1.data import SOL
 from statsf1.tools.utils import pretty_time, parse_time
@@ -41,9 +40,19 @@ def get_position(raw_position):
         return np.nan  # default position when driver DNF
 
 
+def get_lap(lap):
+    try:
+        return int(lap)
+    except:
+        return np.nan
+
+
 def get_time(raw_time):
-    raw_time = pretty_time(raw_time)
-    return parse_time(raw_time)
+    try:
+        raw_time = pretty_time(raw_time)
+        return parse_time(raw_time)
+    except:
+        return np.nan
 
 
 class DbNotFoundException(Exception):
@@ -164,23 +173,6 @@ class ByYearExplorer(WeekendsExplorer):
         collection = self.db.get_documents_in_collection(self.year)
         return pd.DataFrame(data=collection)
 
-    def get_driver_summary(self, category, key, years, driver):
-        summary = []
-        for year in years:
-            weekends = ByYearExplorer(self.db_name, year).get_names()
-            weekends = [
-                WeekendExplorer(self.db, year, weekend)
-                for weekend in weekends
-            ]
-
-    def get_chassis_summary(self, category, key, years, chassis):
-        # todo use WeekendSummary
-        pass
-
-    def get_position_summary(self, category, key, years, position):
-        # todo use WeekendSummary
-        pass
-
 
 class ByWeekendsExplorer(WeekendsExplorer):
     def __init__(self, db, weekend):
@@ -229,7 +221,10 @@ class WeekendExplorer(Explorer):
         if label not in self.WEEKEND_LABELS:
             raise DbWrongKeyException(label, self.WEEKEND_LABELS)
 
-        return self.weekend[label]
+        try:
+            return self.weekend[label]
+        except:
+            return {}
 
     def _get_key(self, key):
         if key not in self.WEEKEND_KEYS:
@@ -258,18 +253,16 @@ class WeekendExplorer(Explorer):
 
         if driver_order is not None:
             original_drivers = pd.DataFrame(category_data["Pilote "])
+            ordered_data = []
             for driver in driver_order:
-                row = original_drivers.loc[
-                    original_drivers["Pilote "] == driver]
-                if row.empty:
-                    print(driver, "will not be found")
+                try:
+                    index = original_drivers["Pilote "] == driver
+                    index = original_drivers.index[index].tolist()[0]  # first
+                    ordered_data.append(data[index])
+                except:
+                    ordered_data.append(np.nan)
 
-            data = [
-                data[original_drivers.index[
-                    original_drivers["Pilote "] == driver
-                    ].tolist()[0]]  # first index
-                for driver in driver_order
-            ]
+            data = ordered_data
 
         return data
 
@@ -296,9 +289,13 @@ class WeekendExplorer(Explorer):
 
     def get_race_finishes(self, drivers):
         laps = self.get_category_key("result", "Tour ", driver_order=drivers)
-        laps = pd.Series(pd.to_numeric(laps))
+        laps = [
+            get_lap(lap)
+            for lap in laps
+        ]
         race_laps = max(laps)
-        laps = laps.apply(has_completed_race, race_laps=race_laps)
+        laps = pd.Series(laps)
+        laps.apply(has_completed_race, race_laps=race_laps)
 
         return pd.DataFrame(laps, columns=[self.RACE_FINISHES_KEY])
 
@@ -390,8 +387,110 @@ class WeekendExplorer(Explorer):
             .join(best_lap_vs_q_pos).join(best_lap_vs_q_time)  # concatenate
         return summary
 
+    def get_driver_summary(self, key, driver):
+        summary = self.get_summary()
+        row = summary.loc[summary[self.DRIVERS_KEY] == driver]
+        return row[key].tolist()[0]
 
-if __name__ == '__main__':
-    e = WeekendExplorer("statsf1", 2017, "Italie")
-    summary = e.get_summary()
-    print(pretty_df(summary))
+    def get_chassis_summary(self, key, driver):
+        summary = self.get_summary()
+        row = summary.loc[summary[self.CHASSIS_KEY] == driver]
+        return row[key].tolist()[0]  # todo average of the positions
+
+    def get_position_summary(self, key, position):
+        summary = self.get_summary()
+        row = summary.loc[position]
+        return row[key]
+
+
+class SummaryExplorer(Explorer):
+    def __init__(self, db, years):
+        super().__init__(db)
+
+        self.years = list(years)
+        self.weekends = self._get_weekends()
+
+    def _get_weekends(self):
+        weekends_list = []
+
+        for year in self.years:
+            weekends_names = ByYearExplorer(self.db_name, year).get_names()
+            weekends = [
+                WeekendExplorer(self.db_name, year, weekend)
+                for weekend in weekends_names
+            ]
+            df = pd.DataFrame(
+                data=[weekends],
+                columns=weekends_names
+            )
+
+            weekends_list.append(df)
+
+        return weekends_list
+
+    def _get_yearly_summary(self, summary):
+        for year, (i, year_summary) in zip(self.years, enumerate(summary)):
+            summary[i].insert(0, "Year", [year])
+
+        summary = pd.concat(summary, sort=False)
+        return summary
+
+    def get_driver_summary(self, key, driver):
+        summary = []
+
+        for year_weekends in self.weekends:
+            data = []
+            for weekend_name in year_weekends.keys():
+                weekend = year_weekends[weekend_name][0]
+                try:
+                    data.append(weekend.get_driver_summary(key, driver))
+                except:
+                    data.append(np.nan)
+
+            df = pd.DataFrame(
+                data=[data],
+                columns=year_weekends.columns
+            )
+            summary.append(df)
+
+        return self._get_yearly_summary(summary)
+
+    def get_chassis_summary(self, key, chassis):
+        summary = []
+
+        for year_weekends in self.weekends:
+            data = []
+            for weekend_name in year_weekends.keys():
+                weekend = year_weekends[weekend_name][0]
+                try:
+                    data.append(weekend.get_chassis_summary(key, chassis))
+                except:
+                    data.append(np.nan)
+
+            df = pd.DataFrame(
+                data=[data],
+                columns=year_weekends.columns
+            )
+            summary.append(df)
+
+        return self._get_yearly_summary(summary)
+
+    def get_position_summary(self, key, position):
+        summary = []
+
+        for year_weekends in self.weekends:
+            data = []
+            for weekend_name in year_weekends.keys():
+                weekend = year_weekends[weekend_name][0]
+                try:
+                    data.append(weekend.get_position_summary(key, position))
+                except:
+                    data.append(np.nan)
+
+            df = pd.DataFrame(
+                data=[data],
+                columns=year_weekends.columns
+            )
+            summary.append(df)
+
+        return self._get_yearly_summary(summary)
