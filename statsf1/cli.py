@@ -18,13 +18,15 @@ class AppMode(Enum):
     EXPLORE = "explore"
     STATS = "stats"
     PREDICT = "predict"
+    BETS = "bets"
 
     @staticmethod
     def available():
         return [
             AppMode.EXPLORE.value,
             AppMode.STATS.value,
-            AppMode.PREDICT.value
+            AppMode.PREDICT.value,
+            AppMode.BETS.value
         ]
 
 
@@ -81,6 +83,8 @@ def main():
     elif mode == AppMode.PREDICT.value:
         year = 2018
         predict(race, year, n_years, DATABASE_NAME)
+    elif mode == AppMode.BETS.value:
+        pass  # todo
 
 
 if __name__ == '__main__':
