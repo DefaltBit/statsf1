@@ -160,19 +160,25 @@ class ByWeekendsExplorer(WeekendsExplorer):
 
 class WeekendExplorer(Explorer):
     RACE_POS_KEY = "Race pos"
+    RACE_TIME_KEY = "Race time"
     DRIVERS_KEY = "Drivers"
     CHASSIS_KEY = "Chassis"
     Q_POS_KEY = "Q pos"
+    Q_TIME_KEY = "Q time"
     BEST_LAPS_POS_KEY = "Best lap pos"
+    BEST_LAPS_TIME_KEY = "Best lap time"
     RACE_FINISHES_KEY = "Race completed?"
     RACE_VS_Q_POS_KEY = "Race pos VS Q pos"
     BEST_LAP_VS_Q_TIME_KEY = "Best lap VS Q time"
     BEST_LAP_VS_Q_POS_KEY = "Best lap VS Q pos"
     EXTRA_KEYS = [RACE_FINISHES_KEY, RACE_VS_Q_POS_KEY,
                   BEST_LAP_VS_Q_TIME_KEY, BEST_LAP_VS_Q_POS_KEY]
-    WEEKEND_SUMMARY_KEYS = [RACE_POS_KEY, DRIVERS_KEY, CHASSIS_KEY,
-                            RACE_FINISHES_KEY, Q_POS_KEY, RACE_VS_Q_POS_KEY,
-                            BEST_LAPS_POS_KEY, BEST_LAP_VS_Q_POS_KEY,
+    WEEKEND_SUMMARY_KEYS = [RACE_POS_KEY, RACE_TIME_KEY, DRIVERS_KEY,
+                            CHASSIS_KEY,
+                            RACE_FINISHES_KEY, Q_POS_KEY, Q_TIME_KEY,
+                            RACE_VS_Q_POS_KEY,
+                            BEST_LAPS_POS_KEY, BEST_LAPS_TIME_KEY,
+                            BEST_LAP_VS_Q_POS_KEY,
                             BEST_LAP_VS_Q_TIME_KEY]
 
     def __init__(self, db, year, weekend):
@@ -315,10 +321,13 @@ class WeekendExplorer(Explorer):
                             columns=[self.BEST_LAP_VS_Q_TIME_KEY])
 
     def get_summary(self):
-        # todo add more labels
         race_pos = pd.DataFrame(
             self.get_category_key("result", "Pos ").tolist(),
             columns=[self.RACE_POS_KEY]
+        )
+        race_times = pd.DataFrame(
+            self.get_category_key("result", "\xa0").tolist(),
+            columns=[self.RACE_TIME_KEY]
         )
         driver_order = self.get_category_key("result", "Pilote ").tolist()
         drivers = pd.DataFrame(
@@ -337,6 +346,12 @@ class WeekendExplorer(Explorer):
             ),
             columns=[self.Q_POS_KEY]
         )
+        q_times = pd.DataFrame(
+            self.get_category_key(
+                "qualifications", "Temps ", driver_order=driver_order
+            ),
+            columns=[self.Q_TIME_KEY]
+        )
         race_vs_q_pos = self.get_race_vs_q_pos(driver_order)
         best_lap_pos = pd.DataFrame(
             self.get_category_key(
@@ -344,12 +359,28 @@ class WeekendExplorer(Explorer):
             ),
             columns=[self.BEST_LAPS_POS_KEY]
         )
+        best_lap_times = pd.DataFrame(
+            self.get_category_key(
+                "best_laps", "Temps ", driver_order=driver_order
+            ),
+            columns=[self.BEST_LAPS_TIME_KEY]
+        )
         best_lap_vs_q_pos = self.get_best_lap_vs_q_pos(driver_order)
         best_lap_vs_q_time = self.get_best_lap_vs_q_time(driver_order)
 
-        summary = race_pos.join(drivers).join(chassis).join(race_finishes) \
-            .join(q_pos).join(race_vs_q_pos).join(best_lap_pos) \
-            .join(best_lap_vs_q_pos).join(best_lap_vs_q_time)  # concatenate
+        summary = race_pos \
+            .join(race_times) \
+            .join(drivers) \
+            .join(chassis) \
+            .join(race_finishes) \
+            .join(q_pos) \
+            .join(q_times) \
+            .join(race_vs_q_pos) \
+            .join(best_lap_pos) \
+            .join(best_lap_times) \
+            .join(best_lap_vs_q_pos) \
+            .join(best_lap_vs_q_time)  # concatenate
+
         return summary
 
     def get_summary_column(self, key):
@@ -386,114 +417,85 @@ class WeekendExplorer(Explorer):
 
 
 class SummaryExplorer(Explorer):
-    def __init__(self, db, years):
+    def __init__(self, db, years, races):
         super().__init__(db)
 
         self.years = list(years)
+        self.races = list(races)
         self.weekends = self._get_weekends()
 
     def _get_weekends(self):
-        weekends_list = []
-
-        for year in self.years:
-            weekends_names = ByYearExplorer(self.db_name, year).get_names()
-            weekends = [
+        return [
+            [
                 WeekendExplorer(self.db_name, year, weekend)
-                for weekend in weekends_names
+                for weekend in self.races
             ]
-            df = pd.DataFrame(
-                data=[weekends],
-                columns=weekends_names
-            )
-
-            weekends_list.append(df)
-
-        return weekends_list
+            for year in self.years
+        ]
 
     def _get_yearly_summary(self, summary):
-        for year, (i, year_summary) in zip(self.years, enumerate(summary)):
-            summary[i].insert(0, "Year", [year])
-
-        summary = pd.concat(summary, sort=False)
+        summary = [
+            [year] + row  # add year
+            for year, row in zip(self.years, summary)
+        ]
+        summary = pd.DataFrame(data=summary, columns=["Year"] + self.races)
         return summary
 
-    def get_driver_summary(self, key, driver):
+    @staticmethod
+    def _get_chassis_summary(weekend, *args, **kwargs):
+        return weekend.get_chassis_summary(*args, **kwargs)
+
+    @staticmethod
+    def _get_position_summary(weekend, *args, **kwargs):
+        return weekend.get_position_summary(*args, **kwargs)
+
+    @staticmethod
+    def _get_column_summary(weekend, *args, **kwargs):
+        return weekend.get_summary_column(*args, **kwargs)
+
+    @staticmethod
+    def _get_driver_summary(weekend, *args, **kwargs):
+        return weekend.get_driver_summary(*args, **kwargs)
+
+    def _get_summary(self, func, *args, **kwargs):
         summary = []
 
         for year_weekends in self.weekends:
             data = []
-            for weekend_name in year_weekends.keys():
-                weekend = year_weekends[weekend_name][0]
+
+            for weekend in year_weekends:
                 try:
-                    data.append(weekend.get_driver_summary(key, driver))
+                    data.append(func(weekend, *args, **kwargs))
                 except:
                     data.append(np.nan)
 
-            df = pd.DataFrame(
-                data=[data],
-                columns=year_weekends.columns
-            )
-            summary.append(df)
+            summary.append(data)
 
         return self._get_yearly_summary(summary)
+
+    def get_driver_summary(self, key, driver):
+        return self._get_summary(
+            self._get_driver_summary,
+            key=key,
+            driver=driver
+        )
 
     def get_chassis_summary(self, key, chassis):
-        summary = []
-
-        for year_weekends in self.weekends:
-            data = []
-            for weekend_name in year_weekends.keys():
-                weekend = year_weekends[weekend_name][0]
-                try:
-                    data.append(weekend.get_chassis_summary(key, chassis))
-                except:
-                    data.append(np.nan)
-
-            df = pd.DataFrame(
-                data=[data],
-                columns=year_weekends.columns
-            )
-            summary.append(df)
-
-        return self._get_yearly_summary(summary)
+        return self._get_summary(
+            self._get_chassis_summary,
+            key=key,
+            chassis=chassis
+        )
 
     def get_position_summary(self, key, position):
-        summary = []
-
-        for year_weekends in self.weekends:
-            data = []
-            for weekend_name in year_weekends.keys():
-                weekend = year_weekends[weekend_name][0]
-                try:
-                    data.append(weekend.get_position_summary(key, position))
-                except:
-                    data.append(np.nan)
-
-            df = pd.DataFrame(
-                data=[data],
-                columns=year_weekends.columns
-            )
-            summary.append(df)
-
-        return self._get_yearly_summary(summary)
+        return self._get_summary(
+            self._get_position_summary,
+            key=key,
+            position=position
+        )
 
     def get_column_summary(self, key):
-        summary = []
-
-        for year_weekends in self.weekends:
-            data = []
-            for weekend_name in year_weekends.keys():
-                weekend = year_weekends[weekend_name][0]
-                try:
-                    column = weekend.get_summary_column(key)
-                    data.append(column)
-                except:
-                    data.append(np.nan)
-
-            df = pd.DataFrame(
-                data=[data],
-                columns=year_weekends.columns
-            )
-            summary.append(df)
-
-        return self._get_yearly_summary(summary)
+        return self._get_summary(
+            self._get_column_summary,
+            key=key
+        )

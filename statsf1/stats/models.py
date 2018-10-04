@@ -6,12 +6,11 @@
 
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
+from hal.streams.pretty_table import pretty_df
 
-from statsf1.data import NUM_FORMAT, NORM_PROB_FORMAT, SOL, LOW_NUM_FORMAT, \
-    TOL
+from statsf1.data import NUM_FORMAT, NORM_PROB_FORMAT, SOL, LOW_NUM_FORMAT
 from statsf1.explore.models import SummaryExplorer, WeekendExplorer
-from statsf1.tools.parse import parse_time
+from statsf1.tools.utils import get_time
 
 # formatting
 COMPLETES_FORMAT = "# past years = {}\n" \
@@ -80,8 +79,8 @@ def compare_to_stakes(probabilities, stakes):
 
 
 class Statistician(SummaryExplorer):
-    def __init__(self, db, years):
-        super().__init__(db, years)
+    def __init__(self, db, years, races):
+        super().__init__(db, years, races)
 
     @staticmethod
     def _parse_values(values, nan_value):
@@ -90,8 +89,24 @@ class Statistician(SummaryExplorer):
             for value in values
         ]
 
-    def get_race_finishes(self):
-        summary = self.get_column_summary(WeekendExplorer.RACE_FINISHES_KEY)
+    @staticmethod
+    def _count_race_finishes(values):
+        return values.count(True)
+
+    @staticmethod
+    def _get_win_margin(times):
+        first_time = get_time(times[0])
+        second_time = get_time(times[1])
+        time_delta = float(first_time - second_time)
+
+        return time_delta
+
+    @staticmethod
+    def _get_winner(values):
+        return values[0]
+
+    def _get_summary_values(self, key, func, *args, **kwargs):
+        summary = self.get_column_summary(key)
 
         for row in range(summary.shape[0]):
             for col in range(1, summary.shape[1]):  # not count year
@@ -99,73 +114,53 @@ class Statistician(SummaryExplorer):
 
                 try:
                     weekend_column = self._parse_values(weekend_column, False)
-                    race_finishes = weekend_column.count(True)
-                    summary.iloc[row, col] = race_finishes
+                    summary.iloc[row, col] = func(weekend_column, *args,
+                                                  **kwargs)
                 except:
                     summary.iloc[row, col] = np.nan
 
         return summary
 
+    def get_race_finishes(self):
+        return self._get_summary_values(
+            WeekendExplorer.RACE_FINISHES_KEY,
+            self._count_race_finishes
+        )
 
-    def _get_qualify_margin(self):
-        _, summaries = self.explorer.get_previous_years_results(self.n_years)
-        summary = {
-            year: parse_time(data[1][7]) - parse_time(data[0][7])
-            for year, data in summaries.items()
-        }
-        x = [
-            diff for year, diff in summary.items()
-        ]
+    def get_q_win_margin(self):
+        return self._get_summary_values(
+            WeekendExplorer.Q_TIME_KEY,
+            self._get_win_margin
+        )
 
-        return norm.fit(x)
+    def get_race_win_margin(self):
+        return self._get_summary_values(
+            WeekendExplorer.RACE_TIME_KEY,
+            self._get_win_margin
+        )
 
-
-    def _get_race_margin(self):
-        _, summaries = self.explorer.get_previous_years_results(self.n_years)
-        summary = {
-            year: parse_time(data[1][5]) - parse_time(data[0][5])
-            for year, data in summaries.items()
-        }
-        x = [
-            diff for year, diff in summary.items()
-        ]
-
-        return norm.fit(x)
+    def get_race_winner_q_position(self):
+        return self._get_summary_values(
+            WeekendExplorer.Q_POS_KEY,
+            self._get_winner
+        )
 
 
-    def _get_winner_q_position(self):
-        _, summaries = self.explorer.get_previous_years_results(self.n_years)
-        summary = {
-            year: float(data[0][6])  # position of winner in qualifications
-            for year, data in summaries.items()
-        }
-        x = [
-            pos for year, pos in summary.items()
-        ]
+def main():
+    db = "statsf1"
+    max_year = 2017
+    min_year = 2015
+    years = range(min_year, max_year + 1)
+    races = ["Japon", "Italie", "Australie"]
 
-        return norm.fit(x)
+    e = Statistician(db, years, races)
+    s = e.get_race_finishes()
+    print(pretty_df(s))
+
+    e = WeekendExplorer(db, 2015, "Australie")
+    s = e.get_summary()
+    print(pretty_df(s))
 
 
-def run(race, driver, year, n_years, n_drivers, db):
-    stats = Statistician(race, year, db, n_years)
-
-    print(TOL + "# drivers who complete the race")
-    stats.print_race_completes(n_drivers, STAKES["completes"])
-
-    print(TOL + "Drivers who complete the race")
-    stats.print_driver_completes()
-
-    print(TOL + "Q time win margin")
-    stats.print_qualify_margin(STAKES["q_margin"])
-
-    print(TOL + "Race time win margin")
-    stats.print_race_margin(STAKES["race_margin"])
-
-    print(TOL + "Q position of winner")
-    stats.print_winner_q_position(n_drivers, STAKES["win_q_pos"])
-
-    print(TOL + "Race summary")
-    stats.print_summary()
-
-    print(TOL + "Driver summary")
-    stats.print_driver_summary(driver)
+if __name__ == '__main__':
+    main()

@@ -31,4 +31,7 @@ def parse_time(time, minutes_split=MINUTES_TOKEN,
 
 
 def pretty_time(time):
+    if "\xa0" in time:
+        time = time.split("\xa0")[1]
+
     return time.replace(SECONDS_TOKEN, PRETTY_SECONDS_TOKEN)
