@@ -2,7 +2,7 @@
 # coding: utf-8
 
 
-""" Gets stats about results in db """
+""" Gets stats about db """
 
 from hal.data.lists import find_commons
 from hal.streams.pretty_table import pretty_format_table
@@ -30,20 +30,6 @@ LT_PROB_FORMAT = "P(< " + LOW_NUM_FORMAT + ") = " + NUM_FORMAT
 IN_BETWEEN_PROB_FORMAT = "P(" + LOW_NUM_FORMAT + " < " + LOW_NUM_FORMAT + \
                          ") = " + NUM_FORMAT
 GT_PROB_FORMAT = "P(> " + LOW_NUM_FORMAT + ") = " + NUM_FORMAT
-
-# probabilities
-COMPLETES_PROBS = [15.5, 16.5, 17.5]
-WIN_QUALIFY_PROBS = [0.1, 0.2, 0.2]
-WIN_RACE_PROBS = [3, 6, 6]
-WIN_Q_PROBS = ["1", "2", "3-4", "5-7", "8-13", "14-20"]
-
-# stakes data (bet365 -> Formula 1)
-STAKES = {
-    "completes": [1.57, 2.25, 2, 1.72, 3.5, 1.28],
-    "q_margin": [2.62, 3, 2.5],
-    "race_margin": [3.25, 3.5, 1.9],
-    "win_q_pos": [1.62, 3.75, 6.5, 17, 34, 51]
-}
 
 
 def print_probabilities(stakes, probabilities, messages):

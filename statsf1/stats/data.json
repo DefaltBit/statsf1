@@ -1,0 +1,68 @@
+{
+  "race": {
+    "n_drivers_finishes": [
+      {
+        "label": ">15.5"
+      },
+      {
+        "label": "<15.5"
+      },
+      {
+        "label": ">16.5"
+      },
+      {
+        "label": "<16.5"
+      },
+      {
+        "label": ">17.5"
+      },
+      {
+        "label": "<17.5"
+      }
+    ],
+    "q_pos_of_winner": [
+      {
+        "label": "1"
+      },
+      {
+        "label": "2"
+      },
+      {
+        "label": "3-4"
+      },
+      {
+        "label": "5-7"
+      },
+      {
+        "label": "8-13"
+      },
+      {
+        "label": "14-20"
+      }
+    ],
+    "win_margin": [
+      {
+        "label": "<3"
+      },
+      {
+        "label": "3-6"
+      },
+      {
+        "label": ">6"
+      }
+    ]
+  },
+  "qualifications": {
+    "win_margin": [
+      {
+        "label": "<0.1"
+      },
+      {
+        "label": "0.1-0.2"
+      },
+      {
+        "label": ">0.3"
+      }
+    ]
+  }
+}
