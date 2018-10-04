@@ -26,7 +26,7 @@ setup(
     url="https://github.com/sirfoga/statsf1",
     packages=find_packages(exclude=["tests"]),
     install_requires=[
-        'pyhal'
+        'pyhal',
         "scipy",
         "setuptools",
         "pymongo",

@@ -12,7 +12,6 @@ from hal.maths.utils import get_percentage_relative_to
 from hal.mongodb.models import DbBrowser
 
 from statsf1.data import SOL
-# formatting
 from statsf1.tools.utils import has_completed_race, get_position, get_lap, \
     get_time
 
@@ -353,17 +352,34 @@ class WeekendExplorer(Explorer):
             .join(best_lap_vs_q_pos).join(best_lap_vs_q_time)  # concatenate
         return summary
 
+    def get_summary_column(self, key):
+        if key not in self.WEEKEND_SUMMARY_KEYS:
+            raise DbWrongKeyException(key, self.WEEKEND_SUMMARY_KEYS)
+
+        summary = self.get_summary()
+        column = summary[key]
+        return column.tolist()[0]
+
     def get_driver_summary(self, key, driver):
+        if key not in self.WEEKEND_SUMMARY_KEYS:
+            raise DbWrongKeyException(key, self.WEEKEND_SUMMARY_KEYS)
+
         summary = self.get_summary()
         row = summary.loc[summary[self.DRIVERS_KEY] == driver]
         return row[key].tolist()[0]
 
     def get_chassis_summary(self, key, driver):
+        if key not in self.WEEKEND_SUMMARY_KEYS:
+            raise DbWrongKeyException(key, self.WEEKEND_SUMMARY_KEYS)
+
         summary = self.get_summary()
         row = summary.loc[summary[self.CHASSIS_KEY] == driver]
         return row[key].tolist()[0]  # todo average of the positions
 
     def get_position_summary(self, key, position):
+        if key not in self.WEEKEND_SUMMARY_KEYS:
+            raise DbWrongKeyException(key, self.WEEKEND_SUMMARY_KEYS)
+
         summary = self.get_summary()
         row = summary.loc[position]
         return row[key]
@@ -450,6 +466,27 @@ class SummaryExplorer(Explorer):
                 weekend = year_weekends[weekend_name][0]
                 try:
                     data.append(weekend.get_position_summary(key, position))
+                except:
+                    data.append(np.nan)
+
+            df = pd.DataFrame(
+                data=[data],
+                columns=year_weekends.columns
+            )
+            summary.append(df)
+
+        return self._get_yearly_summary(summary)
+
+    def get_column_summary(self, key):
+        summary = []
+
+        for year_weekends in self.weekends:
+            data = []
+            for weekend_name in year_weekends.keys():
+                weekend = year_weekends[weekend_name][0]
+                try:
+                    column = weekend.get_summary_column(key)
+                    data.append(column)
                 except:
                     data.append(np.nan)
 
