@@ -7,7 +7,7 @@
 import argparse
 from enum import Enum
 
-from statsf1.tools.explorer import run as explore
+from statsf1.tools.explore import run as explore
 from statsf1.tools.predict import run as predict
 from statsf1.tools.stats import run as stats
 

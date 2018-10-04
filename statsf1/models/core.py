@@ -14,7 +14,7 @@ from statsf1.tools.logger import get_logger, log_race
 
 class DownloadThread(threading.Thread):
     def __init__(self, queue, local_db):
-        super(DownloadThread, self).__init__()
+        super().__init__()
 
         self.queue = queue
         self.local_db = local_db

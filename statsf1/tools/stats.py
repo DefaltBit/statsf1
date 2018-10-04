@@ -10,7 +10,7 @@ from scipy.stats import norm
 
 from statsf1.data import NUM_FORMAT, DNF, NORM_PROB_FORMAT, SOL, LOW_NUM_FORMAT, \
     TOL, DNF_POS_VALUE
-from statsf1.tools.explorer import RaceExplorer, Explorer
+from statsf1.tools.explore import Explorer
 from statsf1.tools.utils import parse_time
 
 # formatting

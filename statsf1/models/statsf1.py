@@ -78,7 +78,7 @@ class StatF1:
 
 class Year(WebsiteObject):
     def __init__(self, text, url):
-        WebsiteObject.__init__(self, text, url)
+        super().__init__(text, url)
         self.races = []
 
     def get_all_races(self):
@@ -116,7 +116,7 @@ class Year(WebsiteObject):
 
 class Race(WebsiteObject):
     def __init__(self, text, url):
-        WebsiteObject.__init__(self, text, url)
+        super().__init__(text, url)
 
         self.year = self.url.split("/")[4]  # race's year
         self.race_entrants = None  # sections
@@ -179,7 +179,7 @@ class Race(WebsiteObject):
 
 class TableSection(WebsiteObject):
     def __init__(self, text, url):
-        WebsiteObject.__init__(self, text, url)
+        super().__init__(text, url)
 
         self.labels = []
         self.rows = []
