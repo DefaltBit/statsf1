@@ -13,10 +13,11 @@ DESCRIPTION = \
     Questions and issues\n\
     The Github issue tracker is only for bug reports and feature requests."
 VERSION = open("VERSION").readlines()[0]
+VERSION_NUMBER = VERSION.split(" ")[0]
 
 setup(
     name="statsf1",
-    version="0.9.3",
+    version=VERSION_NUMBER,
     author="sirfoga",
     author_email="sirfoga@protonmail.com",
     description=LITTLE_DESCRIPTION,

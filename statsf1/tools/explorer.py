@@ -8,7 +8,7 @@ from hal.data.matrix import Matrix
 from hal.mongodb.documents import DbBrowser
 from hal.streams.pretty_table import pretty_format_table
 
-from statsf1.data import NUM_FORMAT, DNF
+from statsf1.data import DNF
 from statsf1.tools.utils import pretty_time, parse_time
 
 
@@ -38,6 +38,15 @@ class Explorer:
             race
             for race in collection
         ]
+
+    def get_race_by_name(self, year, race_name):
+        races = [
+            race
+            for race in self.get_races(year)
+            if race["name"] == race_name
+        ]
+
+        return races[0]
 
     def get_year_values(self, year, races, category, label, driver, chassis,
                         position):
@@ -110,6 +119,29 @@ class Explorer:
 
         return matrix
 
+    def get_race_data(self, year, race, category, labels):
+        """
+        :param year: str
+            Browse this year
+        :param race: str
+            Browse this race
+        :param category: str
+            Race category, e.g "race_entrants", "qualifications" ...
+        :param labels: [] of str
+            Result labels, e.g ["Tour", "Moyenne"] ...
+        :return: [] of [] of str
+            Category results of selected labels
+        """
+
+        race = self.get_race_by_name(year, race)
+        category = race[category]
+        columns = [
+            category[label]
+            for label in labels
+        ]
+
+        return columns
+
     def get_chassis(self, year):
         races = self.get_races(year)
         chassis = []
@@ -145,140 +177,157 @@ class RaceExplorer(Explorer):
         self.raw_year = str(year)
         self.race = None
 
-    def get_race(self):
-        if self.race is None:
-            race = [
-                race
-                for race in self.get_races(self.raw_year)
-                if race["name"] == self.raw_race
-            ]
+    @staticmethod
+    def _order_by_drivers(original_drivers, column, drivers):
+        """
+        :param original_drivers: [] of str
+            List of drivers in column
+        :param column: [] of anything
+            List of data
+        :param drivers: [] of str
+            List of drivers to order by
+        :return: [] of anything
+            Data column ordered by drivers
+        """
 
-            if race:
-                return race[0]
+        ordered_column = []
 
-        return self.race
+        for driver in original_drivers:
+            index = drivers.index(driver)
+            value = column[index]
 
-    def get_results(self, key, labels):
-        race = self.get_race()
-        drivers = race[key]["Pilote "]  # drivers are main key
-        data = [
-            race[key][label]
-            for label in labels
-        ]  # find all other data
+            ordered_column.append(value)
 
-        data = {
-            driver: {
-                label: data[j][i]
-                for j, label in enumerate(labels)
-            }
-            for i, driver in enumerate(drivers)
-        }
+        return ordered_column
 
-        for driver, labels in data.items():
-            if "Pos " in labels:
-                try:
-                    int(data[driver]["Pos "])  # fix null positions
-                except:
-                    data[driver]["Pos "] = "ab"
+    def get_race_summary(self, drivers=None):
+        """
+        :param drivers: [] of str
+            List of drivers to order by
+        :return: [] of [] anything
+            Matrix (ordered by drivers) of race results
+        """
 
-        return data
-
-    def get_drivers(self):
-        race = self.get_race()
-        return list(set(race["result"]["Pilote "]))
-
-    def get_race_summary(self):
-        return self.get_results(
+        data = Matrix(self.get_race_data(
+            self.raw_year,
+            self.raw_race,
             "result",
-            ["Ch\\xc3\\xa2ssis ", "Pos ", "Tour ", "\xa0"]
-        )
+            ["Pos", "Pilote ", "Ch\\xc3\\xa2ssis ", "Tour ", "\xa0"]
+        ))
 
-    def get_qualification_summary(self):
-        return self.get_results(
+    def get_qualification_summary(self, drivers=None):
+        return self.get_race_data(
+            self.raw_year,
+            self.raw_race,
             "qualifications",
-            ["Ch\\xc3\\xa2ssis ", "Pos ", "Temps "]
+            ["Pos", "Pilote", "Ch\\xc3\\xa2ssis ", "Temps "]
         )
 
-    def get_best_laps_summary(self):
-        return self.get_results(
+    def get_best_laps_summary(self, drivers=None):
+        return self.get_race_data(
+            self.raw_year,
+            self.raw_race,
             "best_laps",
-            ["Ch\\xc3\\xa2ssis ", "n ", "Temps "]
+            ["Pos", "Pilote", "Ch\\xc3\\xa2ssis ", "n ", "Temps "]
         )
 
-    def get_summary(self):
-        try:
-            race = self.get_race_summary()
-            qualification = self.get_qualification_summary()
-            best_laps = self.get_best_laps_summary()
+    @staticmethod
+    def _get_race_completed(column, ratio=0.9):
+        """
+        :param column: [] of str
+            List of laps completed
+        :param ratio: float
+            Laps must be over ratio * tot race laps iff completed
+        :return: [] of bool
+            Each row is True iff laps >= 90% race laps
+        """
 
-            standings = sorted(race.items(),
-                               key=lambda x: int(x[1]["Pos "], 16))
-            race_laps = float(
-                race[standings[0][0]]["Tour "])  # laps of the winner
-            summary = []
+        column = [
+            float(val)
+            for val in column
+        ]
+        race_laps = max(column)
+        completed_laps = ratio * race_laps
 
-            for driver, _ in standings:
-                race_pos = race[driver]["Pos "]
-                try:
-                    int(race_pos)
-                except:
-                    race_pos = DNF
+        return [
+            val >= completed_laps
+            for val in column
+        ]
 
-                try:
-                    race_completed = int(
-                        race[driver]["Tour "]) > 0.9 * race_laps
-                except:
-                    race_completed = False
+    @staticmethod
+    def _get_race_vs_q(race_drivers, race_column, q_drivers, q_column):
+        """
+        :param race_drivers: [] of str
+            List of drivers at the end of the race
+        :param race_column: [] of str
+            List of position of the drivers at the end of the race
+        :param q_drivers: [] of str
+            List of the drivers at the end of the qualifications
+        :param q_column: [] of str
+            List of position of the drivers at the end of the qualifications
+        :return: [] of float
+            Each row is driver.race_position - driver.q_position
+        """
 
-                if race_completed:
-                    race_completed = "yes"
-                else:
-                    race_completed = "no"
+        race_vs_q = []
 
-                try:
-                    race_time = race[driver]["\xa0"].split("(")[0].strip()
-                except:
-                    race_time = DNF
+        for i, driver in enumerate(race_drivers):
+            race_position = race_column[i]
+            q_index = q_drivers.index(driver)
+            q_position = q_column[q_index]
 
-                row = [
-                    race_pos, driver, race[driver]["Ch\\xc3\\xa2ssis "],
-                    race[driver]["Tour "], race_completed, race_time
-                ]
+            race_vs_q.append(race_position - q_position)
 
-                try:
-                    q_pos = qualification[driver]["Pos "]
-                    q_lap = pretty_time(qualification[driver]["Temps "])
-                    q_lap_time = parse_time(q_lap)
+        return race_vs_q
 
-                    try:
-                        race_vs_q = str(int(race_pos) - int(q_pos))
-                    except:
-                        race_vs_q = DNF
-                except:
-                    q_pos = DNF
-                    q_lap = DNF
-                    q_lap_time = 0
-                    race_vs_q = DNF
+    @staticmethod
+    def _get_best_lap_vs_q(bl_drivers, bl_column, q_drivers, q_column):
+        """
+        :param bl_drivers: [] of str
+            List of drivers at the end of the race
+        :param bl_column: [] of str
+            List of position of the drivers at the end of the race
+        :param q_drivers: [] of str
+            List of the drivers at the end of the qualifications
+        :param q_column: [] of str
+            List of position of the drivers at the end of the qualifications
+        :return: [] of float
+            Each row is driver.race_position - driver.q_position
+        """
 
-                row += [q_pos, q_lap, race_vs_q]
+        bl_vs_q = []
 
-                try:
-                    best_lap_pos = best_laps[driver]["n "]
-                    best_lap = pretty_time(best_laps[driver]["Temps "])
-                    best_lap_time = parse_time(best_lap)
-                    ratio_best_q = 100.0 * (best_lap_time / q_lap_time - 1)
-                    ratio_best_q = NUM_FORMAT.format(ratio_best_q) + "%"
-                except:
-                    best_lap_pos = DNF
-                    best_lap = DNF
-                    ratio_best_q = DNF
+        for i, driver in enumerate(bl_drivers):
+            bl_time = bl_column[i]  # raw data
+            q_index = q_drivers.index(driver)
+            q_time = q_column[q_index]
 
-                row += [best_lap_pos, best_lap, ratio_best_q]
-                summary.append(row)
-        except:
-            summary = self.DNF_RACE
+            bl_time = parse_time(pretty_time(bl_time))  # convert to nice format
+            q_time = parse_time(pretty_time(q_time))
+            bl_vs_q_time = 100.0 * (bl_time / q_time - 1.0)  # percentage
 
-        return self.RACE_SUMMARY_LABELS, summary
+            bl_vs_q.append(bl_vs_q_time)
+
+        return bl_vs_q
+
+    def get_weekend_matrix(self):
+        """
+        :return: [] of [] of str
+            Matrix of results of weekend
+        """
+
+        race = Matrix(self.get_race_summary())
+        qualification = Matrix(self.get_qualification_summary())
+        best_laps = Matrix(self.get_best_laps_summary())
+
+        race_pos = race.get_column(0)
+        driver = race.get_column(1)
+        chassis = race.get_column(2)
+        race_laps = race.get_column(3)
+        race_completed = self._get_race_completed(race_laps)
+        race_time = race.get_column(4)
+
+        return summary
 
     def get_previous_years_results(self, n_years):
         year = int(self.raw_year)
@@ -288,7 +337,7 @@ class RaceExplorer(Explorer):
             str(year):
                 RaceExplorer(
                     self.raw_race, str(year), self.db_name
-                ).get_summary()[1]
+                ).get_weekend_matrix()[1]
             for year in years
         }
 
@@ -317,7 +366,7 @@ class RaceExplorer(Explorer):
         ]  # year's race names
 
         return races, [
-            RaceExplorer(race, year, self.db_name).get_summary()
+            RaceExplorer(race, year, self.db_name).get_weekend_matrix()
             for race in races
         ]
 
@@ -380,5 +429,5 @@ def print_available_races(db, year):
 
 def run(db):
     driver = RaceExplorer("Japon", 2011, db)
-    labels, summary = driver.get_summary()
+    labels, summary = driver.get_weekend_matrix()
     print(pretty_format_table(labels, summary))

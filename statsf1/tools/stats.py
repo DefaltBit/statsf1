@@ -376,7 +376,7 @@ class Statistician:
         )
 
     def print_summary(self):
-        labels, summary = self.explorer.get_summary()
+        labels, summary = self.explorer.get_weekend_matrix()
         print(RACE_SUMMARY_FORMAT.format(
             self.explorer.raw_race, self.explorer.raw_year
         ))
