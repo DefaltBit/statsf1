@@ -6,11 +6,11 @@
 import numpy as np
 import pandas as pd
 
-from statsf1.explore.models import WeekendExplorer, Explorer, SummaryExplorer
+from statsf1.explore.models import WeekendExplorer, SummaryExplorer
 from statsf1.tools.utils import get_time
 
 
-class StatsExplorer(Explorer):
+class StatsExplorer:
     @staticmethod
     def _parse_values(values, nan_value):
         return [
@@ -82,7 +82,6 @@ class WeekendStats(StatsExplorer):
     ]
 
     def __init__(self, db, years, weekend):
-        super().__init__(db)
         self.explorers = [
             WeekendExplorer(db, year, weekend)
             for year in years
@@ -224,7 +223,6 @@ class WeekendStats(StatsExplorer):
 
 class WeekendsStats(StatsExplorer):
     def __init__(self, db, years, weekends):
-        super().__init__(db)
         self.explorer = SummaryExplorer(db, years, weekends)
 
     def get_race_finishes(self):
