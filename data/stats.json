@@ -57,7 +57,7 @@
         "label": ">6"
       }
     ],
-    "winner": [
+    "driver winner": [
       {
         "label": "Lewis HAMILTON"
       },
@@ -119,7 +119,7 @@
         "label": "Carlos SAINZ"
       }
     ],
-    "podium": {
+    "driver podium": {
       "Lewis HAMILTON": [
         {
           "label": true
@@ -281,7 +281,7 @@
         }
       ]
     },
-    "finish": {
+    "driver finish": {
       "Lewis HAMILTON": [
         {
           "label": true
@@ -435,6 +435,202 @@
         }
       ],
       "Carlos SAINZ": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ]
+    },
+    "chassis winner": [
+      {
+        "label": "Ferrari"
+      },
+      {
+        "label": "Force India"
+      },
+      {
+        "label": "Haas"
+      },
+      {
+        "label": "McLaren"
+      },
+      {
+        "label": "Mercedes"
+      },
+      {
+        "label": "Red Bull"
+      },
+      {
+        "label": "Renault"
+      },
+      {
+        "label": "Sauber"
+      },
+      {
+        "label": "Toro Rosso"
+      },
+      {
+        "label": "Williams"
+      }
+    ],
+    "chassis points": {
+      "Ferrari": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Force India": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Haas": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "McLaren": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Mercedes": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Red Bull": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Renault": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Sauber": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Toro Rosso": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Williams": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ]
+    },
+    "chassis finish": {
+      "Ferrari": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Force India": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Haas": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "McLaren": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Mercedes": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Red Bull": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Renault": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Sauber": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Toro Rosso": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Williams": [
         {
           "label": true
         },
@@ -456,7 +652,7 @@
         "label": ">0.3"
       }
     ],
-    "winner": [
+    "driver winner": [
       {
         "label": "Lewis HAMILTON"
       },
@@ -516,11 +712,43 @@
       },
       {
         "label": "Carlos SAINZ"
+      }
+    ],
+    "chassis winner": [
+      {
+        "label": "Ferrari"
+      },
+      {
+        "label": "Force India"
+      },
+      {
+        "label": "Haas"
+      },
+      {
+        "label": "McLaren"
+      },
+      {
+        "label": "Mercedes"
+      },
+      {
+        "label": "Red Bull"
+      },
+      {
+        "label": "Renault"
+      },
+      {
+        "label": "Sauber"
+      },
+      {
+        "label": "Toro Rosso"
+      },
+      {
+        "label": "Williams"
       }
     ]
   },
   "best lap": {
-    "winner": [
+    "driver winner": [
       {
         "label": "Lewis HAMILTON"
       },
@@ -583,170 +811,12 @@
       }
     ]
   },
-  "chassis": {
-    "points": {
-      "Ferrari": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "Force India": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "Haas": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "McLaren": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "Mercedes": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "Red Bull": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "Renault": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "Sauber": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "Toro Rosso": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "Williams": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ]
+  "grand chelem": [
+    {
+      "label": true
     },
-    "finish": {
-      "Ferrari": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "Force India": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "Haas": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "McLaren": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "Mercedes": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "Red Bull": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "Renault": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "Sauber": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "Toro Rosso": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ],
-      "Williams": [
-        {
-          "label": true
-        },
-        {
-          "label": false
-        }
-      ]
+    {
+      "label": false
     }
-  }
+  ]
 }

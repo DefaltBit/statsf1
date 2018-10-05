@@ -78,7 +78,7 @@
         "value": 1.9
       }
     ],
-    "winner": [
+    "driver winner": [
       {
         "label": "Lewis HAMILTON",
         "value": 1
@@ -160,7 +160,7 @@
         "value": 1
       }
     ],
-    "podium": {
+    "driver podium": {
       "Lewis HAMILTON": [
         {
           "label": true,
@@ -362,7 +362,7 @@
         }
       ]
     },
-    "finish": {
+    "driver finish": {
       "Lewis HAMILTON": [
         {
           "label": true,
@@ -554,6 +554,252 @@
         }
       ],
       "Carlos SAINZ": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ]
+    },
+    "chassis winner": [
+      {
+        "label": "Ferrari",
+        "value": 1
+      },
+      {
+        "label": "Force India",
+        "value": 1
+      },
+      {
+        "label": "Haas",
+        "value": 1
+      },
+      {
+        "label": "McLaren",
+        "value": 1
+      },
+      {
+        "label": "Mercedes",
+        "value": 1
+      },
+      {
+        "label": "Red Bull",
+        "value": 1
+      },
+      {
+        "label": "Renault",
+        "value": 1
+      },
+      {
+        "label": "Sauber",
+        "value": 1
+      },
+      {
+        "label": "Toro Rosso",
+        "value": 1
+      },
+      {
+        "label": "Williams",
+        "value": 1
+      }
+    ],
+    "chassis points": {
+      "Ferrari": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "Force India": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "Haas": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "McLaren": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "Mercedes": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "Red Bull": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "Renault": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "Sauber": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "Toro Rosso": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "Williams": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ]
+    },
+    "chassis finish": {
+      "Ferrari": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "Force India": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "Haas": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "McLaren": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "Mercedes": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "Red Bull": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "Renault": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "Sauber": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "Toro Rosso": [
+        {
+          "label": true,
+          "value": 1
+        },
+        {
+          "label": false,
+          "value": 1
+        }
+      ],
+      "Williams": [
         {
           "label": true,
           "value": 1
@@ -580,7 +826,7 @@
         "value": 2.5
       }
     ],
-    "winner": [
+    "driver winner": [
       {
         "label": "Lewis HAMILTON",
         "value": 1
@@ -659,12 +905,54 @@
       },
       {
         "label": "Carlos SAINZ",
+        "value": 1
+      }
+    ],
+    "chassis winner": [
+      {
+        "label": "Ferrari",
+        "value": 1
+      },
+      {
+        "label": "Force India",
+        "value": 1
+      },
+      {
+        "label": "Haas",
+        "value": 1
+      },
+      {
+        "label": "McLaren",
+        "value": 1
+      },
+      {
+        "label": "Mercedes",
+        "value": 1
+      },
+      {
+        "label": "Red Bull",
+        "value": 1
+      },
+      {
+        "label": "Renault",
+        "value": 1
+      },
+      {
+        "label": "Sauber",
+        "value": 1
+      },
+      {
+        "label": "Toro Rosso",
+        "value": 1
+      },
+      {
+        "label": "Williams",
         "value": 1
       }
     ]
   },
   "best lap": {
-    "winner": [
+    "driver winner": [
       {
         "label": "Lewis HAMILTON",
         "value": 1
@@ -747,210 +1035,14 @@
       }
     ]
   },
-  "chassis": {
-    "points": {
-      "Ferrari": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "Force India": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "Haas": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "McLaren": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "Mercedes": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "Red Bull": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "Renault": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "Sauber": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "Toro Rosso": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "Williams": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ]
+  "grand chelem": [
+    {
+      "label": true,
+      "value": 4.5
     },
-    "finish": {
-      "Ferrari": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "Force India": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "Haas": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "McLaren": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "Mercedes": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "Red Bull": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "Renault": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "Sauber": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "Toro Rosso": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ],
-      "Williams": [
-        {
-          "label": true,
-          "value": 1
-        },
-        {
-          "label": false,
-          "value": 1
-        }
-      ]
+    {
+      "label": false,
+      "value": 1.16
     }
-  }
+  ]
 }

@@ -11,17 +11,9 @@ import pandas as pd
 from hal.maths.utils import get_percentage_relative_to
 from hal.mongodb.models import DbBrowser
 
-from statsf1.data import SOL
 from statsf1.tools.utils import has_completed_race, get_position, get_lap, \
     get_time
 
-TOTAL_ENTRIES_FORMAT = SOL + "{} races\n" + \
-                       SOL + "{:.2f} drivers per weekend\n" + \
-                       SOL + "{:.0f} total entries"
-AVAILABLE_RACES = "Available races in {}:"
-
-# errors
-NOT_FOUND_EXCEPTION = "Cannot find {} in db"
 WRONG_KEY_EXCEPTION = "{} not a valid key in db. Available are {}"
 
 

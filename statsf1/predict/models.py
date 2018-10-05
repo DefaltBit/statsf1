@@ -184,11 +184,6 @@ class Predictor:
         pass  # todo
 
 
-def print_standings(data):
-    for chassis, position in sorted(data.items(), key=lambda x: x[0]):
-        print(STANDINGS_FORMAT.format(float(position), chassis))
-
-
 def run(race, year, n_years, db):
     available_drivers = Statistician(race, year, db, n_years).get_drivers()
     available_chassis = Statistician(race, year, db, n_years).get_chassis()
