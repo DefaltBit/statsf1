@@ -399,13 +399,17 @@ class WeekendExplorer(Explorer):
         row = summary.loc[summary[self.DRIVERS_KEY] == driver]
         return row[key].tolist()[0]
 
-    def get_chassis_summary(self, key, driver):
+    def get_chassis_summary(self, key, chassis):
         if key not in self.WEEKEND_SUMMARY_KEYS:
             raise DbWrongKeyException(key, self.WEEKEND_SUMMARY_KEYS)
 
         summary = self.get_summary()
-        row = summary.loc[summary[self.CHASSIS_KEY] == driver]
-        return row[key].tolist()[0]  # todo average of the positions
+        row = summary.loc[summary[self.CHASSIS_KEY] == chassis]
+        try:
+            # todo check
+            return np.nanmean(row[key].tolist())  # average of the positions
+        except:
+            return row[key].tolist()[0]
 
     def get_position_summary(self, key, position):
         if key not in self.WEEKEND_SUMMARY_KEYS:

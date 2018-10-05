@@ -1,6 +1,6 @@
 {
   "race": {
-    "n_drivers_finishes": [
+    "n drivers finishes": [
       {
         "label": ">15.5"
       },
@@ -17,10 +17,16 @@
         "label": ">17.5"
       },
       {
-        "label": "<17.5"
+        "label": "<16"
+      },
+      {
+        "label": "16-17"
+      },
+      {
+        "label": ">17"
       }
     ],
-    "q_pos_of_winner": [
+    "q pos of winner": [
       {
         "label": "1"
       },
@@ -40,7 +46,7 @@
         "label": "14-20"
       }
     ],
-    "win_margin": [
+    "win margin": [
       {
         "label": "<3"
       },
@@ -50,10 +56,396 @@
       {
         "label": ">6"
       }
-    ]
+    ],
+    "winner": [
+      {
+        "label": "Lewis HAMILTON"
+      },
+      {
+        "label": "Max VERSTAPPEN"
+      },
+      {
+        "label": "Daniel RICCIARDO"
+      },
+      {
+        "label": "Valtteri BOTTAS"
+      },
+      {
+        "label": "Kimi RAIKKONEN"
+      },
+      {
+        "label": "Esteban OCON"
+      },
+      {
+        "label": "Sergio PEREZ"
+      },
+      {
+        "label": "Kevin MAGNUSSEN"
+      },
+      {
+        "label": "Romain GROSJEAN"
+      },
+      {
+        "label": "Felipe MASSA"
+      },
+      {
+        "label": "Fernando ALONSO"
+      },
+      {
+        "label": "Jolyon PALMER"
+      },
+      {
+        "label": "Pierre GASLY"
+      },
+      {
+        "label": "Stoffel VANDOORNE"
+      },
+      {
+        "label": "Pascal WEHRLEIN"
+      },
+      {
+        "label": "Lance STROLL"
+      },
+      {
+        "label": "Nico HULKENBERG"
+      },
+      {
+        "label": "Marcus ERICSSON"
+      },
+      {
+        "label": "Sebastian VETTEL"
+      },
+      {
+        "label": "Carlos SAINZ"
+      }
+    ],
+    "podium": {
+      "Lewis HAMILTON": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Max VERSTAPPEN": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Daniel RICCIARDO": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Valtteri BOTTAS": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Kimi RAIKKONEN": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Esteban OCON": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Sergio PEREZ": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Kevin MAGNUSSEN": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Romain GROSJEAN": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Felipe MASSA": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Fernando ALONSO": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Jolyon PALMER": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Pierre GASLY": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Stoffel VANDOORNE": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Pascal WEHRLEIN": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Lance STROLL": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Nico HULKENBERG": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Marcus ERICSSON": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Sebastian VETTEL": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Carlos SAINZ": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ]
+    },
+    "finish": {
+      "Lewis HAMILTON": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Max VERSTAPPEN": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Daniel RICCIARDO": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Valtteri BOTTAS": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Kimi RAIKKONEN": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Esteban OCON": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Sergio PEREZ": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Kevin MAGNUSSEN": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Romain GROSJEAN": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Felipe MASSA": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Fernando ALONSO": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Jolyon PALMER": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Pierre GASLY": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Stoffel VANDOORNE": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Pascal WEHRLEIN": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Lance STROLL": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Nico HULKENBERG": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Marcus ERICSSON": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Sebastian VETTEL": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Carlos SAINZ": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ]
+    }
   },
   "qualifications": {
-    "win_margin": [
+    "win margin": [
       {
         "label": "<0.1"
       },
@@ -63,6 +455,298 @@
       {
         "label": ">0.3"
       }
+    ],
+    "winner": [
+      {
+        "label": "Lewis HAMILTON"
+      },
+      {
+        "label": "Max VERSTAPPEN"
+      },
+      {
+        "label": "Daniel RICCIARDO"
+      },
+      {
+        "label": "Valtteri BOTTAS"
+      },
+      {
+        "label": "Kimi RAIKKONEN"
+      },
+      {
+        "label": "Esteban OCON"
+      },
+      {
+        "label": "Sergio PEREZ"
+      },
+      {
+        "label": "Kevin MAGNUSSEN"
+      },
+      {
+        "label": "Romain GROSJEAN"
+      },
+      {
+        "label": "Felipe MASSA"
+      },
+      {
+        "label": "Fernando ALONSO"
+      },
+      {
+        "label": "Jolyon PALMER"
+      },
+      {
+        "label": "Pierre GASLY"
+      },
+      {
+        "label": "Stoffel VANDOORNE"
+      },
+      {
+        "label": "Pascal WEHRLEIN"
+      },
+      {
+        "label": "Lance STROLL"
+      },
+      {
+        "label": "Nico HULKENBERG"
+      },
+      {
+        "label": "Marcus ERICSSON"
+      },
+      {
+        "label": "Sebastian VETTEL"
+      },
+      {
+        "label": "Carlos SAINZ"
+      }
     ]
+  },
+  "best lap": {
+    "winner": [
+      {
+        "label": "Lewis HAMILTON"
+      },
+      {
+        "label": "Max VERSTAPPEN"
+      },
+      {
+        "label": "Daniel RICCIARDO"
+      },
+      {
+        "label": "Valtteri BOTTAS"
+      },
+      {
+        "label": "Kimi RAIKKONEN"
+      },
+      {
+        "label": "Esteban OCON"
+      },
+      {
+        "label": "Sergio PEREZ"
+      },
+      {
+        "label": "Kevin MAGNUSSEN"
+      },
+      {
+        "label": "Romain GROSJEAN"
+      },
+      {
+        "label": "Felipe MASSA"
+      },
+      {
+        "label": "Fernando ALONSO"
+      },
+      {
+        "label": "Jolyon PALMER"
+      },
+      {
+        "label": "Pierre GASLY"
+      },
+      {
+        "label": "Stoffel VANDOORNE"
+      },
+      {
+        "label": "Pascal WEHRLEIN"
+      },
+      {
+        "label": "Lance STROLL"
+      },
+      {
+        "label": "Nico HULKENBERG"
+      },
+      {
+        "label": "Marcus ERICSSON"
+      },
+      {
+        "label": "Sebastian VETTEL"
+      },
+      {
+        "label": "Carlos SAINZ"
+      }
+    ]
+  },
+  "chassis": {
+    "points": {
+      "Ferrari": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Force India": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Haas": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "McLaren": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Mercedes": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Red Bull": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Renault": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Sauber": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Toro Rosso": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Williams": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ]
+    },
+    "finish": {
+      "Ferrari": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Force India": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Haas": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "McLaren": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Mercedes": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Red Bull": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Renault": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Sauber": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Toro Rosso": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ],
+      "Williams": [
+        {
+          "label": true
+        },
+        {
+          "label": false
+        }
+      ]
+    }
   }
 }
