@@ -71,6 +71,15 @@ class WeekendStats(StatsExplorer):
         WeekendExplorer.YEAR_KEY,
         WeekendExplorer.RACE_FINISHES_KEY
     ]
+    RACE_Q_BEST_LAP_WIN_MARGIN_COLUMNS = [
+        WeekendExplorer.YEAR_KEY,
+        "Race winner: name",
+        "Race win margin",
+        "Q winner: name",
+        "Q win margin",
+        "Best lap winner: name",
+        "Best lap win margin"
+    ]
 
     def __init__(self, db, years, weekend):
         super().__init__(db)
@@ -172,7 +181,45 @@ class WeekendStats(StatsExplorer):
 
         return pd.DataFrame(data=data, columns=self.RACE_FINISHES_COLUMNS)
 
-        # todo win margin, q maring, best lap margin
+    def get_race_q_best_lap_win_margin(self):
+        data = []
+
+        for explorer in self.explorers:
+            race_times = explorer.get_category_key("result", "\xa0")
+            q_times = explorer.get_category_key("qualifications", "Temps ")
+            best_lap_times = explorer.get_category_key("best_laps", "Temps ")
+
+            race_win_margin = self._get_win_margin(race_times.tolist())
+            q_win_margin = self._get_win_margin(q_times.tolist())
+            best_lap_win_margin = self._get_win_margin(best_lap_times.tolist())
+
+            race_winner_name = explorer.get_position_summary(
+                WeekendExplorer.DRIVERS_KEY,
+                0
+            )  # name of race winner
+            q_winner_name = explorer.get_category_key(
+                "qualifications",
+                "Pilote "
+            )[0]  # name of q winner
+            best_lap_winner_name = explorer.get_category_key(
+                "best_laps",
+                "Pilote "
+            )[0]  # name of best lap winner
+
+            summary = [
+                explorer.year,
+                race_winner_name,
+                race_win_margin,
+                q_winner_name,
+                q_win_margin,
+                best_lap_winner_name,
+                best_lap_win_margin
+            ]
+
+            data.append(summary)
+
+        return pd.DataFrame(data=data,
+                            columns=self.RACE_Q_BEST_LAP_WIN_MARGIN_COLUMNS)
 
 
 class WeekendsStats(StatsExplorer):
@@ -196,6 +243,13 @@ class WeekendsStats(StatsExplorer):
     def get_race_win_margin(self):
         summary = self.explorer.get_column_summary(
             WeekendExplorer.RACE_TIME_KEY)
+        nan_value = str(float("inf"))
+        return self._get_summary_values(summary, nan_value,
+                                        self._get_win_margin)
+
+    def get_bets_lap_win_margin(self):
+        summary = self.explorer.get_column_summary(
+            WeekendExplorer.BEST_LAPS_TIME_KEY)
         nan_value = str(float("inf"))
         return self._get_summary_values(summary, nan_value,
                                         self._get_win_margin)
