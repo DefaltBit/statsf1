@@ -32,10 +32,10 @@ class Explorer:
         self.db_name = db
         self.db = DbBrowser(self.db_name)  # db browser
 
-    def get_weekend(self, year, race):
+    def get_weekend(self, year, weekend_name):
         return [
             x
-            for x in self.db.get_collection(year).find({"name": race})
+            for x in self.db.get_collection(year).find({"name": weekend_name})
         ][0]  # get first weekend found
 
     def count_weekends(self):
@@ -46,8 +46,8 @@ class Explorer:
         return str(year)
 
     @staticmethod
-    def _get_weekend_collection(race_name):
-        return str(race_name)
+    def _get_weekend_collection(weekend_name):
+        return str(weekend_name)
 
     @staticmethod
     def _is_valid_weekend(weekend):
@@ -415,18 +415,18 @@ class WeekendExplorer(Explorer):
 
 
 class SummaryExplorer(Explorer):
-    def __init__(self, db, years, races):
+    def __init__(self, db, years, weekends):
         super().__init__(db)
 
         self.years = list(years)
-        self.races = list(races)
+        self.weekend_names = list(weekends)
         self.weekends = self._get_weekends()
 
     def _get_weekends(self):
         return [
             [
                 WeekendExplorer(self.db_name, year, weekend)
-                for weekend in self.races
+                for weekend in self.weekend_names
             ]
             for year in self.years
         ]
@@ -436,7 +436,8 @@ class SummaryExplorer(Explorer):
             [year] + row  # add year
             for year, row in zip(self.years, summary)
         ]
-        summary = pd.DataFrame(data=summary, columns=["Year"] + self.races)
+        columns = ["Year"] + self.weekend_names
+        summary = pd.DataFrame(data=summary, columns=columns)
         return summary
 
     @staticmethod
