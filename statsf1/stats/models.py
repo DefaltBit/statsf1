@@ -34,21 +34,42 @@ class StatsExplorer(Explorer):
     def _get_winner(values):
         return values[0]
 
+    @staticmethod
+    def _get_summary_values(summary, nan_value, func, *args, **kwargs):
+        for row in range(summary.shape[0]):
+            for col in range(1, summary.shape[1]):  # not count year
+                weekend_column = summary.iloc[row][col]
+
+                try:
+                    weekend_column = StatsExplorer._parse_values(
+                        weekend_column, nan_value  # False in case of NaN
+                    )
+                    summary.iloc[row, col] = func(weekend_column, *args,
+                                                  **kwargs)
+                except:
+                    summary.iloc[row, col] = np.nan
+
+        return summary
+
 
 class WeekendStats(StatsExplorer):
+    GRAND_CHELEM_KEY = "Grand chelem?"
     GRAND_CHELEM_COLUMNS = [
-        "year",
-        "race winner name",
-        "race winner q pos",
-        "race winner best lap pos",
-        "q winner name",
-        "q winner race pos",
-        "q winner best lap pos",
-        "best lap winner name",
-        "best lap winner race pos",
-        "best lap winner q pos",
-        "grand chelem points",
-        "grand chelem?"
+        WeekendExplorer.YEAR_KEY,
+        "Race winner: name",
+        "Race winner: " + WeekendExplorer.Q_POS_KEY.lower(),
+        "Race winner: " + WeekendExplorer.BEST_LAPS_POS_KEY.lower(),
+        "Q winner: name",
+        "Q winner: " + WeekendExplorer.RACE_POS_KEY.lower(),
+        "Q winner: " + WeekendExplorer.BEST_LAPS_POS_KEY.lower(),
+        "Best lap winner: name",
+        "Best lap winner: " + WeekendExplorer.RACE_POS_KEY.lower(),
+        "Best lap winner: " + WeekendExplorer.Q_POS_KEY.lower(),
+        GRAND_CHELEM_KEY
+    ]
+    RACE_FINISHES_COLUMNS = [
+        WeekendExplorer.YEAR_KEY,
+        WeekendExplorer.RACE_FINISHES_KEY
     ]
 
     def __init__(self, db, years, weekend):
@@ -66,6 +87,7 @@ class WeekendStats(StatsExplorer):
         """
 
         data = []
+
         for explorer in self.explorers:
             # stats about race winner
             race_winner_name = explorer.get_position_summary(
@@ -125,14 +147,30 @@ class WeekendStats(StatsExplorer):
                 best_lap_winner_name,
                 best_lap_winner_race_pos,
                 best_lap_winner_q_pos,
-                grand_chelem_points,
                 grand_chelem
             ]
             data.append(summary)
 
         return pd.DataFrame(data=data, columns=self.GRAND_CHELEM_COLUMNS)
 
-        # todo race finishes per year
+    def get_race_finishes(self):
+        data = []
+
+        for explorer in self.explorers:
+            drivers = explorer.get_category_key("result", "Pilote ").tolist()
+            race_finishes = explorer.get_race_finishes(drivers)
+            race_finishes = race_finishes[
+                WeekendExplorer.RACE_FINISHES_KEY].tolist()
+            race_finishes = self._count_race_finishes(race_finishes)
+
+            summary = [
+                explorer.year,
+                race_finishes
+            ]
+
+            data.append(summary)
+
+        return pd.DataFrame(data=data, columns=self.RACE_FINISHES_COLUMNS)
 
         # todo win margin, q maring, best lap margin
 
@@ -142,42 +180,27 @@ class WeekendsStats(StatsExplorer):
         super().__init__(db)
         self.explorer = SummaryExplorer(db, years, weekends)
 
-    def _get_summary_values(self, key, func, *args, **kwargs):
-        summary = self.explorer.get_column_summary(key)
-
-        for row in range(summary.shape[0]):
-            for col in range(1, summary.shape[1]):  # not count year
-                weekend_column = summary.iloc[row][col]
-
-                try:
-                    weekend_column = self._parse_values(weekend_column, False)
-                    summary.iloc[row, col] = func(weekend_column, *args,
-                                                  **kwargs)
-                except:
-                    summary.iloc[row, col] = np.nan
-
-        return summary
-
     def get_race_finishes(self):
-        return self._get_summary_values(
-            WeekendExplorer.RACE_FINISHES_KEY,
-            self._count_race_finishes
-        )
+        summary = self.explorer.get_column_summary(
+            WeekendExplorer.RACE_FINISHES_KEY)
+        nan_value = False
+        return self._get_summary_values(summary, nan_value,
+                                        self._count_race_finishes)
 
     def get_q_win_margin(self):
-        return self._get_summary_values(
-            WeekendExplorer.Q_TIME_KEY,
-            self._get_win_margin
-        )
+        summary = self.explorer.get_column_summary(WeekendExplorer.Q_TIME_KEY)
+        nan_value = str(float("inf"))
+        return self._get_summary_values(summary, nan_value,
+                                        self._get_win_margin)
 
     def get_race_win_margin(self):
-        return self._get_summary_values(
-            WeekendExplorer.RACE_TIME_KEY,
-            self._get_win_margin
-        )
+        summary = self.explorer.get_column_summary(
+            WeekendExplorer.RACE_TIME_KEY)
+        nan_value = str(float("inf"))
+        return self._get_summary_values(summary, nan_value,
+                                        self._get_win_margin)
 
     def get_race_winner_q_position(self):
-        return self._get_summary_values(
-            WeekendExplorer.Q_POS_KEY,
-            self._get_winner
-        )
+        summary = self.explorer.get_column_summary(WeekendExplorer.Q_POS_KEY)
+        nan_value = float("inf")  # DNF
+        return self._get_summary_values(summary, nan_value, self._get_winner)

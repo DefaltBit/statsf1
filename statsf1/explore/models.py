@@ -165,6 +165,7 @@ class WeekendExplorer(Explorer):
     RACE_VS_Q_POS_KEY = "Race pos VS Q pos"
     BEST_LAP_VS_Q_TIME_KEY = "Best lap VS Q time"
     BEST_LAP_VS_Q_POS_KEY = "Best lap VS Q pos"
+    YEAR_KEY = "Year"
     EXTRA_KEYS = [RACE_FINISHES_KEY, RACE_VS_Q_POS_KEY,
                   BEST_LAP_VS_Q_TIME_KEY, BEST_LAP_VS_Q_POS_KEY]
     WEEKEND_SUMMARY_KEYS = [RACE_POS_KEY, RACE_TIME_KEY, DRIVERS_KEY,
@@ -436,7 +437,7 @@ class SummaryExplorer(Explorer):
             [year] + row  # add year
             for year, row in zip(self.years, summary)
         ]
-        columns = ["Year"] + self.weekend_names
+        columns = [WeekendExplorer.YEAR_KEY] + self.weekend_names
         summary = pd.DataFrame(data=summary, columns=columns)
         return summary
 
