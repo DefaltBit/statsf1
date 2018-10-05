@@ -53,9 +53,10 @@ class WeekendStats(StatsExplorer):
 
     def __init__(self, db, years, weekend):
         super().__init__(db)
-
-        self.years = list(years)
-        self.weekend_name = self._get_weekend_collection(weekend)
+        self.explorers = [
+            WeekendExplorer(db, year, weekend)
+            for year in years
+        ]
 
     def get_grand_chelem(self):
         """
@@ -65,46 +66,43 @@ class WeekendStats(StatsExplorer):
         """
 
         data = []
-
-        for year in self.years:
-            weekend = WeekendExplorer(self.db_name, year, self.weekend_name)
-
+        for explorer in self.explorers:
             # stats about race winner
-            race_winner_name = weekend.get_position_summary(
+            race_winner_name = explorer.get_position_summary(
                 WeekendExplorer.DRIVERS_KEY,
                 0
             )  # name of race winner
-            race_winner_q_pos = weekend.get_driver_summary(
+            race_winner_q_pos = explorer.get_driver_summary(
                 WeekendExplorer.Q_POS_KEY,
                 race_winner_name
             )  # q position of winner
-            race_winner_best_lap_pos = weekend.get_driver_summary(
+            race_winner_best_lap_pos = explorer.get_driver_summary(
                 WeekendExplorer.BEST_LAPS_POS_KEY,
                 race_winner_name
             )  # best lap position of winner
 
-            q_winner_name = weekend.get_category_key(
+            q_winner_name = explorer.get_category_key(
                 "qualifications",
                 "Pilote "
             )[0]  # name of q winner
-            q_winner_race_pos = weekend.get_driver_summary(
+            q_winner_race_pos = explorer.get_driver_summary(
                 WeekendExplorer.RACE_POS_KEY,
                 q_winner_name
             )  # race position of q winner
-            q_winner_best_lap_pos = weekend.get_driver_summary(
+            q_winner_best_lap_pos = explorer.get_driver_summary(
                 WeekendExplorer.BEST_LAPS_POS_KEY,
                 q_winner_name
             )  # best lap position of q winner
 
-            best_lap_winner_name = weekend.get_category_key(
+            best_lap_winner_name = explorer.get_category_key(
                 "best_laps",
                 "Pilote "
             )[0]  # name of best lap winner
-            best_lap_winner_race_pos = weekend.get_driver_summary(
+            best_lap_winner_race_pos = explorer.get_driver_summary(
                 WeekendExplorer.RACE_POS_KEY,
                 best_lap_winner_name
             )  # race position of best lap winner
-            best_lap_winner_q_pos = weekend.get_driver_summary(
+            best_lap_winner_q_pos = explorer.get_driver_summary(
                 WeekendExplorer.Q_POS_KEY,
                 best_lap_winner_name
             )  # q position of best lap winner
@@ -117,7 +115,7 @@ class WeekendStats(StatsExplorer):
             grand_chelem = grand_chelem_points == 3.0
 
             summary = [
-                year,
+                explorer.year,
                 race_winner_name,
                 race_winner_q_pos,
                 race_winner_best_lap_pos,
