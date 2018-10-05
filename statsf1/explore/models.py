@@ -132,13 +132,15 @@ class ByYearExplorer(WeekendsExplorer):
 
 
 class ByWeekendExplorer(WeekendsExplorer):
-    def __init__(self, db, weekend):
+    def __init__(self, db, weekend, years=None):
         self.weekend = self._get_weekend_collection(weekend)
+        self.years = years
 
         super().__init__(db)
 
     def _get_weekends(self):
-        years = self.db.get_collection_names()
+        if self.years is None:
+            self.years = self.db.get_collection_names()
 
         return pd.DataFrame([
             [
@@ -146,7 +148,7 @@ class ByWeekendExplorer(WeekendsExplorer):
                 for x in
                 self.db.get_collection(year).find({"name": self.weekend})
             ][0]  # get first weekend found
-            for year in years
+            for year in self.years
         ])
 
 
