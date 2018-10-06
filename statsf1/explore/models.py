@@ -42,11 +42,11 @@ class Explorer:
         return self.db.get_documents_count()
 
     @staticmethod
-    def _get_year_collection(year):
+    def get_year_collection(year):
         return str(year)
 
     @staticmethod
-    def _get_weekend_collection(weekend_name):
+    def get_weekend_collection(weekend_name):
         return str(weekend_name)
 
     @staticmethod
@@ -122,7 +122,7 @@ class WeekendsExplorer(Explorer):
 
 class ByYearExplorer(WeekendsExplorer):
     def __init__(self, db, year):
-        self.year = self._get_year_collection(year)
+        self.year = self.get_year_collection(year)
 
         super().__init__(db)
 
@@ -133,7 +133,7 @@ class ByYearExplorer(WeekendsExplorer):
 
 class ByWeekendExplorer(WeekendsExplorer):
     def __init__(self, db, weekend, years=None):
-        self.weekend = self._get_weekend_collection(weekend)
+        self.weekend = self.get_weekend_collection(weekend)
         self.years = years
 
         super().__init__(db)
@@ -179,8 +179,8 @@ class WeekendExplorer(Explorer):
     def __init__(self, db, year, weekend):
         super().__init__(db)
 
-        self.year = self._get_year_collection(year)
-        self.weekend_name = self._get_weekend_collection(weekend)
+        self.year = self.get_year_collection(year)
+        self.weekend_name = self.get_weekend_collection(weekend)
         self.weekend = self.get_weekend(self.year, self.weekend_name)
 
     def _get_label(self, label):

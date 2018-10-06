@@ -3,6 +3,7 @@
 
 
 """ Predicts race results based on db """
+from statsf1.explore.models import Explorer
 
 from statsf1.stats.models import WeekendStats
 
@@ -15,6 +16,11 @@ from statsf1.stats.models import WeekendStats
 
 
 class PredictExplore:
+    def __init__(self, db, years, year, weekend):
+        self.stats = WeekendStats(db, years, weekend)
+        self.weekend = Explorer.get_weekend_collection(weekend)
+        self.year = Explorer.get_year_collection(year)
+
     @staticmethod
     def _preprocess(data):
         pass
@@ -28,45 +34,60 @@ class PredictExplore:
 
 
 class DriverPredict(PredictExplore):
-    def __init__(self, db, driver, years, weekend):
+    def __init__(self, db, driver, years, year, weekend):
+        super().__init__(db, years, year, weekend)
         self.driver = str(driver)
-        self.stats = WeekendStats(db, years, weekend)
 
-        # todo predict
-        # -- Race
-        # winner ?
-        # podium ?
-        # completes race ?
-        # -- Q
-        # win ?
-        # -- Best lap
-        # win ?
+    def get_race_winner(self):
+        pass  # todo
+
+    def get_race_podium(self):
+        pass  # todo
+
+    def get_completes_race(self):
+        pass  # todo
+
+    def get_q_winner(self):
+        pass  # todo
+
+    def get_best_lap_winner(self):
+        pass  # todo
 
 
 class ChassisPredict(PredictExplore):
-    def __init__(self, db, chassis, years, weekend):
+    # all true false -> 0, 1 -> clf (and also show prob)
+    def __init__(self, db, chassis, years, year, weekend):
+        super().__init__(db, years, year, weekend)
         self.chassis = str(chassis)
-        self.stats = WeekendStats(db, years, weekend)
 
-        # todo predict
-        # -- Race
-        # winner ?
-        # both points (top 10) ? | true false -> 0, 1 -> clf (and also show prob)
-        # both complete race ? | true false -> 0, 1 -> clf (and also show prob)
-        # -- Q
-        # win ? | true false -> 0, 1 -> clf (and also show prob)
+    def get_race_winner(self):
+        pass  # todo
+
+    def get_both_points(self):
+        pass  # todo
+
+    def get_both_complete_race(self):
+        pass  # todo
+
+    def get_q_winner(self):
+        pass  # todo
 
 
 class WeekendPredict(PredictExplore):
-    def __init__(self, db, years, weekend):
-        self.stats = WeekendStats(db, years, weekend)
+    # all regr
 
-        # todo predict
-        # -- Race
-        # # drivers finishes | regr
-        # Q position of winner | regr
-        # win margin | regr
-        # -- Q
-        # win margin | regr
-        # -- Grand chelem
-        # will there be ? | true false -> 0, 1 -> clf (and also show prob)
+    def get_n_drivers_finishes(self):
+        pass  # todo
+
+    def get_q_position_of_winner(self):
+        pass  # todo
+
+    def get_race_win_margin(self):
+        pass  # todo
+
+    def get_q_win_margin(self):
+        pass  # todo
+
+    def get_grand_chelem(self):
+        pass  # todo
+        #  will there be ? | true false -> 0, 1 -> clf (and also show prob)
