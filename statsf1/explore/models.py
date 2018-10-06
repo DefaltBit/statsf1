@@ -33,10 +33,15 @@ class Explorer:
         self.db = DbBrowser(self.db_name)  # db browser
 
     def get_weekend(self, year, weekend_name):
-        return [
+        candidates = [
             x
             for x in self.db.get_collection(year).find({"name": weekend_name})
-        ][0]  # get first weekend found
+        ]
+
+        if candidates:
+            return candidates[0]  # get first weekend found
+
+        return None
 
     def count_weekends(self):
         return self.db.get_documents_count()
