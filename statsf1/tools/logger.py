@@ -8,6 +8,8 @@ import logging
 import threading
 
 # formatting
+from hal.streams.pretty_table import pretty_df
+
 LOG_THREAD_FORMAT = "thread-{} {} {}"
 LOG_RACES_FORMAT = "Found {} races"
 LOG_GOT_FORMAT = "Got {}"
@@ -24,25 +26,29 @@ STREAM_HANDLER.setFormatter(logging.Formatter(LOG_FORMAT))
 
 LOGGER.addHandler(STREAM_HANDLER)
 
+# messages
+MATRIX_FORMAT = "{}: {} rows x {} columns"
+
 
 def get_logger():
     return LOGGER
 
 
-def log_races(races):
+def log_matrix(name, matrix, show_values=False):
     logger = get_logger()
-    logger.debug(LOG_RACES_FORMAT.format(len(races)))
+
+    rows = matrix.shape[0]
+    columns = matrix.shape[1]
+    message = MATRIX_FORMAT.format(name, rows, columns)
+
+    logger.debug(message)
+
+    if show_values:
+        print(pretty_df(matrix))
 
 
-def log_race(race):
-    logger = get_logger()
-    thread_id = threading.current_thread().ident
-    logger.debug(LOG_THREAD_FORMAT.format(thread_id, race.text, race.year))
-
-
-def log_year(year):
-    logger = get_logger()
-    logger.debug(LOG_GOT_FORMAT.format(str(year)))
+def log_ml_algorithm(algorithm):
+    pass  # todo
 
 
 def log_error(race, cause=None):
@@ -50,6 +56,6 @@ def log_error(race, cause=None):
     thread_id = threading.current_thread().ident
     text = race.text + " " + race.year
     if cause:
-        text += " because " + str(cause)
+        text += " due to " + str(cause)
 
     logger.error(LOG_THREAD_FORMAT.format(thread_id, text, race.url))

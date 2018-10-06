@@ -5,10 +5,13 @@
 """ Predicts race results based on db """
 
 import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
 
-from statsf1.explore.models import ByYearExplorer, SummaryExplorer, \
-    WeekendExplorer
-from statsf1.stats.models import WeekendStats
+from statsf1.explore.models import ByYearExplorer, WeekendExplorer
+from statsf1.stats.models import WeekendStats, WeekendsStats
+# todo
+# predict based on other drivers/chassis positions
+from tools.logger import log_matrix
 
 
 # todo
@@ -17,19 +20,37 @@ from statsf1.stats.models import WeekendStats
 # clf
 #  http://scikit-learn.org/stable/auto_examples/classification/plot_classification_probability.html
 
-# todo
-# predict based on other drivers/chassis positions
+
+def just_these_columns(df, columns):
+    columns_to_drop = [
+        column
+        for column in df.keys()
+        if column not in columns
+    ]
+    return df.drop(columns_to_drop, axis=1)  # columns
+
+
+def just_common_columns(dfs):
+    common_columns = list(dfs[0].keys())
+    for df in dfs[1:]:
+        common_columns = list(set(common_columns).intersection(df.keys()))
+
+    return [
+        just_these_columns(df, common_columns)
+        for df in dfs
+    ]
+
 
 class PredictExplore:
     def __init__(self, db, years, year, weekend):
         self.weekend = weekend
 
-        years = list(years) + [year]
-        self.stats = WeekendStats(db, years, weekend)
+        years = sorted(set(list(years) + [year]))
+        self.weekend_stats = WeekendStats(db, years, weekend)
 
         year_explorer = ByYearExplorer(db, year)
         weekends = year_explorer.get_names()  # weekends of this year
-        self.past_explorer = SummaryExplorer(db, years, weekends)
+        self.stats = WeekendsStats(db, years, weekends)
 
     def _pre_process(self, data, n_years=0):
         """
@@ -74,6 +95,27 @@ class PredictExplore:
                 x_predict[year_label] = [y_train.iloc[row, 1]]
                 y_past[self.weekend] = y_past[self.weekend].shift(1)  # shift
 
+        years_to_drop = x_train.index[:n_years]  # there will be NaN
+        x_train = x_train.drop(years_to_drop)
+        y_train = y_train.drop(years_to_drop)
+
+        # remove year column
+        x_train = x_train.drop([WeekendExplorer.YEAR_KEY], axis=1)
+        y_train = y_train.drop([WeekendExplorer.YEAR_KEY], axis=1)
+        x_predict = x_predict.drop([WeekendExplorer.YEAR_KEY], axis=1)
+
+        # drop NaN
+        x_train = x_train.dropna(axis=1)  # remove weekends not in all years
+        y_train = y_train.dropna(axis=1)
+        x_predict = x_predict.dropna(axis=1)
+
+        # only common weekends between X train and X pred (past years and this)
+        [x_train, x_predict] = just_common_columns([x_train, x_predict])
+
+        log_matrix("X train", x_train, show_values=True)
+        log_matrix("Y train", y_train, show_values=True)
+        log_matrix("X predict", x_predict, show_values=True)
+
         return x_train, y_train, x_predict
 
     @staticmethod
@@ -83,8 +125,23 @@ class PredictExplore:
     def _get_clf(self):
         pass  # todo
 
-    def _get_regr(self):
+    def _get_clf_data(self):
         pass  # todo
+
+    def get_clf_prediction(self, x_train, y_train, x_pred):
+        pass  # todo
+
+    def _get_regr(self):
+        regr = RandomForestRegressor(max_depth=2, n_estimators=10)
+        return regr
+
+    def _get_regr_data(self, regr):
+        pass  # todo
+
+    def get_regr_prediction(self, x_train, y_train, x_pred):
+        regr = self._get_regr()
+        regr.fit(x_train, y_train)
+        return regr.predict(x_pred)
 
 
 class DriverPredict(PredictExplore):
@@ -130,7 +187,10 @@ class ChassisPredict(PredictExplore):
 class WeekendPredict(PredictExplore):
     # regr
     def get_n_drivers_finishes(self):
-        pass  # todo
+        data = self.stats.get_race_finishes()
+        x_train, y_train, x_predict = self._pre_process(data, n_years=3)
+        pred = self.get_regr_prediction(x_train, y_train, x_predict)
+        return pred[0]  # just 1 sample -> so first value
 
     def get_q_position_of_winner(self):
         pass  # todo
