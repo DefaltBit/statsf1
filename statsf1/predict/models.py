@@ -3,22 +3,16 @@
 
 
 """ Predicts race results based on db """
+# todo
+# predict based on other drivers/chassis positions
 
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVC
 
 from statsf1.explore.models import ByYearExplorer, WeekendExplorer
 from statsf1.stats.models import WeekendStats, WeekendsStats
-# todo
-# predict based on other drivers/chassis positions
 from tools.logger import log_matrix
-
-
-# todo
-# regr
-#  http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html
-# clf
-#  http://scikit-learn.org/stable/auto_examples/classification/plot_classification_probability.html
 
 
 def just_these_columns(df, columns):
@@ -39,6 +33,18 @@ def just_common_columns(dfs):
         just_these_columns(df, common_columns)
         for df in dfs
     ]
+
+
+# todo
+class MlPredictor:
+    def __init__(self, alg):
+        self.alg = alg
+
+    def predict(self, x_train, y_train, x_pred):
+        pass  # todo
+
+    def get_clf_prob(self, x_pred):
+        pass  # todo
 
 
 class PredictExplore:
@@ -112,9 +118,9 @@ class PredictExplore:
         # only common weekends between X train and X pred (past years and this)
         [x_train, x_predict] = just_common_columns([x_train, x_predict])
 
-        log_matrix("X train", x_train, show_values=True)
-        log_matrix("Y train", y_train, show_values=True)
-        log_matrix("X predict", x_predict, show_values=True)
+        log_matrix("X train", x_train)
+        log_matrix("Y train", y_train)
+        log_matrix("X predict", x_predict)
 
         return x_train, y_train, x_predict
 
@@ -123,25 +129,25 @@ class PredictExplore:
         pass  # todo
 
     def _get_clf(self):
-        pass  # todo
+        clf = SVC(kernel='linear', C=10, probability=True)
+        return clf
 
-    def _get_clf_data(self):
-        pass  # todo
+    def _get_clf_prob(self, clf, x_pred):
+        return clf.predict_proba(x_pred)
 
     def get_clf_prediction(self, x_train, y_train, x_pred):
         pass  # todo
 
     def _get_regr(self):
-        regr = RandomForestRegressor(max_depth=2, n_estimators=10)
+        regr = RandomForestRegressor(max_depth=5, n_estimators=100)
         return regr
 
     def _get_regr_data(self, regr):
         pass  # todo
 
-    def get_regr_prediction(self, x_train, y_train, x_pred):
-        regr = self._get_regr()
-        regr.fit(x_train, y_train)
-        return regr.predict(x_pred)
+    def get_prediction(self, alg, x_train, y_train, x_pred):
+        alg.fit(x_train, y_train)
+        return alg, alg.predict(x_pred)
 
 
 class DriverPredict(PredictExplore):
@@ -189,17 +195,35 @@ class WeekendPredict(PredictExplore):
     def get_n_drivers_finishes(self):
         data = self.stats.get_race_finishes()
         x_train, y_train, x_predict = self._pre_process(data, n_years=3)
-        pred = self.get_regr_prediction(x_train, y_train, x_predict)
+        regr = self._get_regr()
+        regr, pred = self.get_prediction(regr, x_train, y_train, x_predict)
         return pred[0]  # just 1 sample -> so first value
+
+    def get_prob_drivers_finishes(self):
+        data = self.stats.get_race_finishes()
+        x_train, y_train, x_predict = self._pre_process(data, n_years=3)
+        clf = self._get_clf()
+        clf, pred = self.get_prediction(clf, x_train, y_train, x_predict)
+        prob = self._get_clf_prob(clf, x_predict)
+
+        return pred[0], prob  # just 1 sample -> so first value
 
     def get_q_position_of_winner(self):
         pass  # todo
 
     def get_race_win_margin(self):
-        pass  # todo
+        data = self.stats.get_race_win_margin()
+        x_train, y_train, x_predict = self._pre_process(data, n_years=3)
+        regr = self._get_regr()
+        regr, pred = self.get_prediction(regr, x_train, y_train, x_predict)
+        return pred[0]  # just 1 sample -> so first value
 
     def get_q_win_margin(self):
-        pass  # todo
+        data = self.stats.get_q_win_margin()
+        x_train, y_train, x_predict = self._pre_process(data, n_years=3)
+        regr = self._get_regr()
+        regr, pred = self.get_prediction(regr, x_train, y_train, x_predict)
+        return pred[0]  # just 1 sample -> so first value
 
     def get_grand_chelem(self):
         pass  # todo
