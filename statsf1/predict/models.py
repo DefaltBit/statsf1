@@ -16,7 +16,7 @@ from sklearn.svm import SVC
 
 from statsf1.explore.models import ByYearExplorer, WeekendExplorer
 from statsf1.stats.models import WeekendStats, WeekendsStats
-from tools.logger import log_matrix
+from tools.logger import log_matrix, log_ml_algorithm
 
 
 def just_these_columns(df, columns):
@@ -44,15 +44,17 @@ class MlAlgorithm:
         self.alg = alg
 
     def _train(self, x_train, y_train):
+        y_train = y_train.ix[:, 0]  # first column
         self.alg.fit(x_train, y_train)
 
-    def _predict(self, x_train, y_train, x_pred):
-        return self.alg.predict(x_train, y_train, x_pred)
+    def _predict(self, x_pred):
+        return self.alg.predict(x_pred)
 
     def make_prediction(self, x_train, y_train, x_pred):
         self._train(x_train, y_train)
-        pred = self._predict(x_train, y_train, x_pred)
-        return pred
+
+        log_ml_algorithm(self.alg)
+        return self._predict(x_pred)
 
     @staticmethod
     @abc.abstractmethod
@@ -66,7 +68,7 @@ class RegrAlgorithm(MlAlgorithm):
 
     @staticmethod
     def get_default():
-        alg = RandomForestRegressor(max_depth=5, n_estimators=100)
+        alg = RandomForestRegressor(max_depth=2, n_estimators=10)
         return RegrAlgorithm(alg)
 
 
@@ -142,8 +144,10 @@ class PredictExplore:
         y_train = y_train.drop(years_to_drop)
 
         # remove year column
+        x_years = x_train[WeekendExplorer.YEAR_KEY].tolist()  # years
         x_train = x_train.drop([WeekendExplorer.YEAR_KEY], axis=1)
         y_train = y_train.drop([WeekendExplorer.YEAR_KEY], axis=1)
+        x_predict_years = x_predict[WeekendExplorer.YEAR_KEY].tolist()  # years
         x_predict = x_predict.drop([WeekendExplorer.YEAR_KEY], axis=1)
 
         # drop NaN
@@ -154,9 +158,11 @@ class PredictExplore:
         # only common weekends between X train and X pred (past years and this)
         [x_train, x_predict] = just_common_columns([x_train, x_predict])
 
-        log_matrix("X train", x_train)
-        log_matrix("Y train", y_train)
-        log_matrix("X predict", x_predict)
+        # debug data
+        log_matrix("X train", x_train, row_names=x_years, show_values=True)
+        log_matrix("Y train", y_train, row_names=x_years, show_values=True)
+        log_matrix("X predict (transpose)", x_predict,
+                   row_names=x_predict_years, show_values=True)
 
         return x_train, y_train, x_predict
 
@@ -170,6 +176,14 @@ class PredictExplore:
 
     def get_clf_prediction(self, x_train, y_train, x_pred):
         return self.get_prediction(self.clf, x_train, y_train, x_pred)
+
+    def predict_regr(self, data, n_years):
+        x_train, y_train, x_predict = self._pre_process(data, n_years=n_years)
+        return self.get_regr_prediction(x_train, y_train, x_predict)
+
+    def predict_clf(self, data, n_years):
+        x_train, y_train, x_predict = self._pre_process(data, n_years=n_years)
+        return self.get_clf_prediction(x_train, y_train, x_predict)
 
 
 class DriverPredict(PredictExplore):
@@ -213,32 +227,41 @@ class ChassisPredict(PredictExplore):
 
 
 class WeekendPredict(PredictExplore):
-    # regr
     def get_n_drivers_finishes(self):
         data = self.stats.get_race_finishes()
-        x_train, y_train, x_predict = self._pre_process(data, n_years=3)
-        return self.get_regr_prediction(x_train, y_train, x_predict)
+        n_years = 1
 
-    def get_prob_n_drivers_finishes(self):
-        data = self.stats.get_race_finishes()
-        x_train, y_train, x_predict = self._pre_process(data, n_years=3)
-        return self.get_clf_prediction(x_train, y_train, x_predict)
-        # todo prob = self._get_clf_prob(clf, x_predict)
+        regr = self.predict_regr(data, n_years)
+        clf = None  # self.predict_clf(data, n_years)
+
+        return regr, clf
 
     def get_race_winner_q_position(self):
         data = self.stats.get_race_winner_q_position()
-        x_train, y_train, x_predict = self._pre_process(data, n_years=1)
-        return self.get_regr_prediction(x_train, y_train, x_predict)
+        n_years = 3
+
+        regr = self.predict_regr(data, n_years)
+        clf = self.predict_clf(data, n_years)
+
+        return regr, clf
 
     def get_race_win_margin(self):
         data = self.stats.get_race_win_margin()
-        x_train, y_train, x_predict = self._pre_process(data, n_years=3)
-        return self.get_regr_prediction(x_train, y_train, x_predict)
+        n_years = 3
+
+        regr = self.predict_regr(data, n_years)
+        # todo clf by classes in stats.json
+
+        return regr
 
     def get_q_win_margin(self):
         data = self.stats.get_q_win_margin()
-        x_train, y_train, x_predict = self._pre_process(data, n_years=3)
-        return self.get_regr_prediction(x_train, y_train, x_predict)
+        n_years = 3
+
+        regr = self.predict_regr(data, n_years)
+        # todo clf by classes in stats.json
+
+        return regr
 
     def get_grand_chelem(self):
         pass  # todo

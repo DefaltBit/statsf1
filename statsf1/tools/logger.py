@@ -10,6 +10,8 @@ import threading
 # formatting
 from hal.streams.pretty_table import pretty_df
 
+from tools.utils import get_class_name
+
 LOG_THREAD_FORMAT = "thread-{} {} {}"
 LOG_RACES_FORMAT = "Found {} races"
 LOG_GOT_FORMAT = "Got {}"
@@ -34,28 +36,31 @@ def get_logger():
     return LOGGER
 
 
-def log_matrix(name, matrix, show_values=False):
-    logger = get_logger()
-
+def log_matrix(name, matrix, row_names=None, show_values=False):
     rows = matrix.shape[0]
     columns = matrix.shape[1]
     message = MATRIX_FORMAT.format(name, rows, columns)
 
-    logger.debug(message)
+    get_logger().debug(message)
+
+    if rows:
+        get_logger().debug("Rows: " + str(row_names))
 
     if show_values:
-        print(pretty_df(matrix))
+        pretty_matrix = pretty_df(matrix)
+        for line in pretty_matrix.split("\n"):
+            get_logger().debug(line)
 
 
 def log_ml_algorithm(algorithm):
-    pass  # todo
+    name = get_class_name(algorithm)
+    get_logger().debug(name + " has been trained, ready to predict")
 
 
 def log_error(race, cause=None):
-    logger = get_logger()
     thread_id = threading.current_thread().ident
     text = race.text + " " + race.year
     if cause:
         text += " due to " + str(cause)
 
-    logger.error(LOG_THREAD_FORMAT.format(thread_id, text, race.url))
+    get_logger().error(LOG_THREAD_FORMAT.format(thread_id, text, race.url))

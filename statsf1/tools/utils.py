@@ -37,3 +37,7 @@ def get_time(raw_time):
         return parse_time(raw_time)
     except:
         return np.nan
+
+
+def get_class_name(obj):
+    return str(obj.__class__.__name__)
